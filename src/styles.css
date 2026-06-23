@@ -930,3 +930,82 @@ a {
   opacity: 1;
   background-color: rgba(255, 108, 114, 0.1);
 }
+
+.history-session-card {
+  cursor: pointer;
+  transition: transform 0.15s ease, background-color 0.15s ease;
+  display: flex !important;
+  flex-direction: column;
+  gap: 0 !important;
+  padding: 20px !important;
+}
+
+.history-session-card:hover {
+  background: linear-gradient(145deg, rgba(34, 46, 57, 0.92), rgba(18, 26, 35, 0.94)) !important;
+}
+
+.history-session-card__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+}
+
+.history-session-card__header div {
+  display: grid;
+  gap: 6px;
+}
+
+.history-session-card__toggle {
+  color: var(--green);
+  display: flex;
+  align-items: center;
+}
+
+.session-detail-rounds {
+  margin-top: 18px;
+  padding-top: 18px;
+  border-top: 1px solid var(--border);
+  display: grid;
+  gap: 8px;
+  width: 100%;
+}
+
+.session-detail-round-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 14px;
+  background: rgba(255, 255, 255, 0.035);
+  border-radius: 12px;
+  font-size: 0.95rem;
+}
+
+.session-detail-round-row .round-meta {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.session-detail-round-row .round-name {
+  font-weight: 800;
+  color: var(--text);
+}
+
+.session-detail-round-row .round-shots {
+  color: var(--muted);
+  font-size: 0.88rem;
+  font-family: monospace;
+}
+
+.session-detail-round-row .round-total {
+  font-weight: 850;
+  color: var(--green);
+}
+
+.no-rounds-text {
+  color: var(--muted);
+  font-size: 0.95rem;
+  text-align: center;
+  margin: 8px 0;
+}
