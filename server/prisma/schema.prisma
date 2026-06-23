@@ -1,0 +1,86 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String    @id @default(cuid())
+  email     String    @unique
+  name      String?
+  createdAt DateTime  @default(now()) @map("created_at")
+  weapons   Weapon[]
+  sessions  Session[]
+
+  @@map("users")
+}
+
+model Weapon {
+  id        String   @id @default(cuid())
+  userId    String   @map("user_id")
+  name      String
+  type      String
+  caliber   String
+  notes     String?
+  createdAt DateTime @default(now()) @map("created_at")
+  user      User     @relation(fields: [userId], references: [id])
+  sessions  Session[]
+
+  @@map("weapons")
+}
+
+model Modality {
+  id              String    @id
+  name            String
+  distance        String
+  weaponType      String    @map("weapon_type")
+  caliber         String
+  shotsPerRound   Int       @map("shots_per_round")
+  maxScorePerShot Int       @map("max_score_per_shot")
+  createdAt       DateTime  @default(now()) @map("created_at")
+  sessions        Session[]
+
+  @@map("modalities")
+}
+
+model Session {
+  id           String    @id @default(cuid())
+  userId       String    @map("user_id")
+  modalityId   String    @map("modality_id")
+  weaponId     String?   @map("weapon_id")
+  type         String
+  date         DateTime
+  notes        String?
+  totalScore   Int       @default(0) @map("total_score")
+  totalShots   Int       @default(0) @map("total_shots")
+  averageScore Float     @default(0) @map("average_score")
+  createdAt    DateTime  @default(now()) @map("created_at")
+  user         User      @relation(fields: [userId], references: [id])
+  modality     Modality  @relation(fields: [modalityId], references: [id])
+  weapon       Weapon?   @relation(fields: [weaponId], references: [id])
+  rounds       Round[]
+
+  @@map("sessions")
+}
+
+model Round {
+  id           String   @id @default(cuid())
+  sessionId    String   @map("session_id")
+  roundNumber  Int      @map("round_number")
+  shot1        Int      @map("shot_1")
+  shot2        Int      @map("shot_2")
+  shot3        Int      @map("shot_3")
+  shot4        Int      @map("shot_4")
+  shot5        Int      @map("shot_5")
+  totalScore   Int      @map("total_score")
+  averageScore Float    @map("average_score")
+  bestShot     Int      @map("best_shot")
+  worstShot    Int      @map("worst_shot")
+  createdAt    DateTime @default(now()) @map("created_at")
+  session      Session  @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  @@map("rounds")
+}
