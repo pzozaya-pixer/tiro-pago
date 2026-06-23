@@ -1,0 +1,12 @@
+.git
+.env
+.env.*
+node_modules
+.pnpm-store
+dist
+server/dist
+*.tsbuildinfo
+qa-*.png
+datos.png
+inicio.png
+icono.png

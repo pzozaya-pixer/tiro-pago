@@ -21,8 +21,8 @@ npm run dev
 
 ## Despliegue Dokploy
 
-Usa el `Dockerfile` para frontend o `docker-compose.yml` para frontend + API Express + PostgreSQL.
-Dokploy puede encargarse del dominio y HTTPS desde su proxy.
+Usa el `docker-compose.yml` para desplegar la PWA estatica desde Git en Dokploy.
+Dokploy puede encargarse del dominio y HTTPS desde su proxy. La demo guarda datos localmente y mantiene cola offline.
 
 Variables principales:
 
@@ -41,7 +41,7 @@ VITE_SUPABASE_ANON_KEY=
 
 ## Base de datos
 
-- PostgreSQL propio: `server/prisma/schema.prisma` y migracion `server/prisma/migrations/0001_init/migration.sql`.
+- PostgreSQL propio opcional: `server/prisma/schema.prisma` y migracion `server/prisma/migrations/0001_init/migration.sql`.
 - Supabase: ejecutar `supabase-schema.sql` y configurar `VITE_DATA_PROVIDER=supabase`.
 
 La primera version prioriza la demo funcional y mantiene la sincronizacion backend como adaptador sencillo.

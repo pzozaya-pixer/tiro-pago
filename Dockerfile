@@ -1,6 +1,6 @@
 FROM node:20-alpine AS build
 WORKDIR /app
-RUN corepack enable
+RUN corepack enable && corepack prepare pnpm@11.5.3 --activate
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 COPY server/package.json ./server/package.json
 RUN pnpm install --frozen-lockfile --filter tiro22...
