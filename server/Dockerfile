@@ -1,6 +1,6 @@
 FROM node:20-alpine AS deps
 WORKDIR /app
-RUN corepack enable
+RUN corepack enable && corepack prepare pnpm@11.5.3 --activate
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 COPY server/package.json ./server/package.json
 RUN pnpm install --frozen-lockfile --filter tiro22-api...
@@ -10,11 +10,12 @@ RUN pnpm prisma:generate
 
 FROM node:20-alpine AS build
 WORKDIR /app
+RUN corepack enable && corepack prepare pnpm@11.5.3 --activate
 COPY --from=deps /app/node_modules ./node_modules
 COPY --from=deps /app/server/node_modules ./server/node_modules
 COPY server ./server
 WORKDIR /app/server
-RUN corepack enable && pnpm build
+RUN pnpm build
 
 FROM node:20-alpine
 WORKDIR /app/server

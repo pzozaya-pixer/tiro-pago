@@ -3,7 +3,7 @@ import { persist } from 'zustand/middleware';
 import { modalities } from '../data/modalities';
 import { createId } from '../lib/id';
 import { recalculateSession, scoreRound } from '../lib/scoring';
-import { enqueueSync } from '../lib/sync';
+import { enqueueSync, flushQueue } from '../lib/sync';
 import type { Round, SessionType, TrainingSession, Weapon } from '../types';
 
 const demoUserId = 'demo-user';
@@ -23,6 +23,7 @@ type TrainingState = {
   saveRound: (input: { sessionId: string; shots: number[] }) => Round;
   setActiveSession: (sessionId: string) => void;
   getActiveSession: () => TrainingSession | undefined;
+  loadFromApi: () => Promise<void>;
 };
 
 const today = new Date().toISOString();
@@ -109,6 +110,12 @@ export const useTrainingStore = create<TrainingState>()(
           activeSessionId: session.id
         }));
         enqueueSync({ type: 'session:create', payload: session });
+
+        const provider = import.meta.env.VITE_DATA_PROVIDER ?? 'local';
+        if (provider === 'api' && navigator.onLine) {
+          flushQueue(import.meta.env.VITE_API_URL ?? '/api').catch(console.error);
+        }
+
         return session;
       },
       saveRound: ({ sessionId, shots }) => {
@@ -138,12 +145,69 @@ export const useTrainingStore = create<TrainingState>()(
           };
         });
         enqueueSync({ type: 'round:create', payload: round });
+
+        const provider = import.meta.env.VITE_DATA_PROVIDER ?? 'local';
+        if (provider === 'api' && navigator.onLine) {
+          flushQueue(import.meta.env.VITE_API_URL ?? '/api').catch(console.error);
+        }
+
         return round;
       },
       setActiveSession: (sessionId) => set({ activeSessionId: sessionId }),
       getActiveSession: () => {
         const { activeSessionId, sessions } = get();
         return sessions.find((session) => session.id === activeSessionId);
+      },
+      loadFromApi: async () => {
+        const provider = import.meta.env.VITE_DATA_PROVIDER ?? 'local';
+        if (provider !== 'api') return;
+
+        const apiUrl = import.meta.env.VITE_API_URL ?? '/api';
+        try {
+          // 1. Enviar datos locales en cola antes de descargar
+          await flushQueue(apiUrl);
+
+          // 2. Descargar sesiones con sus tandas
+          const response = await fetch(`${apiUrl}/sessions`);
+          if (response.ok) {
+            const remoteSessions = await response.json();
+
+            const sessionsList: TrainingSession[] = remoteSessions.map((s: any) => ({
+              id: s.id,
+              userId: s.userId,
+              modalityId: s.modalityId,
+              weaponId: s.weaponId,
+              type: s.type,
+              date: s.date,
+              notes: s.notes,
+              totalScore: s.totalScore,
+              totalShots: s.totalShots,
+              averageScore: s.averageScore,
+              createdAt: s.createdAt
+            }));
+
+            const roundsList: Round[] = remoteSessions.flatMap((s: any) =>
+              (s.rounds ?? []).map((r: any) => ({
+                id: r.id,
+                sessionId: r.sessionId,
+                roundNumber: r.roundNumber,
+                shots: [r.shot1, r.shot2, r.shot3, r.shot4, r.shot5],
+                totalScore: r.totalScore,
+                averageScore: r.averageScore,
+                bestShot: r.bestShot,
+                worstShot: r.worstShot,
+                createdAt: r.createdAt
+              }))
+            );
+
+            set({
+              sessions: sessionsList.length ? sessionsList : seedSessions,
+              rounds: roundsList
+            });
+          }
+        } catch (error) {
+          console.error('Error loading data from API:', error);
+        }
       }
     }),
     {
