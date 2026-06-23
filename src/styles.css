@@ -1009,3 +1009,12 @@ a {
   text-align: center;
   margin: 8px 0;
 }
+
+.summary-date {
+  font-size: 0.72rem !important;
+  color: var(--muted) !important;
+  opacity: 0.85;
+  margin-top: 3px !important;
+  font-weight: 500;
+  display: block;
+}

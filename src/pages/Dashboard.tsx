@@ -4,14 +4,14 @@ import { BrandMark } from '../components/BrandMark';
 import { ProgressChart } from '../components/ProgressChart';
 import { SessionRow } from '../components/SessionRow';
 import { useTrainingStore } from '../store/useTrainingStore';
-import { formatAverage } from '../lib/scoring';
+import { formatAverage, formatDate } from '../lib/scoring';
 
 export function Dashboard() {
   const sessions = useTrainingStore((state) => state.sessions);
   const weekly = sessions.slice(0, 8);
   const totalShots = weekly.reduce((sum, session) => sum + session.totalShots, 0);
   const totalScore = weekly.reduce((sum, session) => sum + session.totalScore, 0);
-  const best = weekly.reduce((max, session) => Math.max(max, session.totalScore), 0);
+  const bestSession = weekly.reduce<any>((best, session) => (!best || session.totalScore > best.totalScore ? session : best), null);
   const average = totalShots ? totalScore / totalShots : 0;
 
   return (
@@ -80,8 +80,11 @@ export function Dashboard() {
           </div>
           <div>
             <Trophy />
-            <strong>{best}</strong>
+            <strong>{bestSession ? bestSession.totalScore : 0}</strong>
             <span>Mejor puntuación</span>
+            {bestSession && (
+              <span className="summary-date">{formatDate(bestSession.date)}</span>
+            )}
           </div>
         </div>
       </section>
