@@ -4,7 +4,8 @@ const queueKey = 'tiro22:offline-queue';
 
 type QueueItem =
   | { type: 'session:create'; payload: TrainingSession; createdAt: string }
-  | { type: 'round:create'; payload: Round; createdAt: string };
+  | { type: 'round:create'; payload: Round; createdAt: string }
+  | { type: 'session:delete'; payload: { id: string }; createdAt: string };
 
 export function enqueueSync(item: Omit<QueueItem, 'createdAt'>) {
   const queue = readQueue();

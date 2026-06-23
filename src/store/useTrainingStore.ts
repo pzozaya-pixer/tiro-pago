@@ -24,6 +24,7 @@ type TrainingState = {
   setActiveSession: (sessionId: string) => void;
   getActiveSession: () => TrainingSession | undefined;
   loadFromApi: () => Promise<void>;
+  deleteSession: (id: string) => void;
 };
 
 const today = new Date().toISOString();
@@ -157,6 +158,19 @@ export const useTrainingStore = create<TrainingState>()(
       getActiveSession: () => {
         const { activeSessionId, sessions } = get();
         return sessions.find((session) => session.id === activeSessionId);
+      },
+      deleteSession: (id) => {
+        set((state) => ({
+          sessions: state.sessions.filter((session) => session.id !== id),
+          rounds: state.rounds.filter((round) => round.sessionId !== id),
+          activeSessionId: state.activeSessionId === id ? undefined : state.activeSessionId
+        }));
+        enqueueSync({ type: 'session:delete', payload: { id } });
+
+        const provider = import.meta.env.VITE_DATA_PROVIDER ?? 'local';
+        if (provider === 'api' && navigator.onLine) {
+          flushQueue(import.meta.env.VITE_API_URL ?? '/api').catch(console.error);
+        }
       },
       loadFromApi: async () => {
         const provider = import.meta.env.VITE_DATA_PROVIDER ?? 'local';

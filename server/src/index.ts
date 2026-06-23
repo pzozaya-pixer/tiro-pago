@@ -109,7 +109,7 @@ app.post('/rounds', async (request, response) => {
 
 app.post('/sync', async (request, response) => {
   const items = z.array(z.object({
-    type: z.enum(['session:create', 'round:create']),
+    type: z.enum(['session:create', 'round:create', 'session:delete']),
     payload: z.any()
   })).parse(request.body.items ?? []);
 
@@ -208,10 +208,33 @@ app.post('/sync', async (request, response) => {
       } catch (error) {
         console.error('Error syncing round:', error);
       }
+    } else if (item.type === 'session:delete') {
+      try {
+        const deleteData = z.object({ id: z.string() }).parse(item.payload);
+        await prisma.session.deleteMany({
+          where: { id: deleteData.id }
+        });
+        syncedCount++;
+      } catch (error) {
+        console.error('Error syncing session delete:', error);
+      }
     }
   }
 
   response.json({ synced: syncedCount });
+});
+
+app.delete('/sessions/:id', async (request, response) => {
+  try {
+    const { id } = request.params;
+    await prisma.session.delete({
+      where: { id }
+    });
+    response.status(204).end();
+  } catch (error) {
+    console.error('Error deleting session:', error);
+    response.status(500).json({ error: 'Failed to delete session' });
+  }
 });
 
 async function ensureDemoUser(id: string) {

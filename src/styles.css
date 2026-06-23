@@ -896,11 +896,8 @@ a {
   }
 
   .session-row {
-    grid-template-columns: auto 1fr auto;
-  }
-
-  .session-row__chevron {
-    display: none;
+    grid-template-columns: auto 1fr auto auto;
+    gap: 10px;
   }
 
   .round-context,
@@ -913,4 +910,23 @@ a {
     padding-left: 0;
     border-left: 0;
   }
+}
+
+.delete-session-button {
+  background: transparent;
+  border: 0;
+  color: var(--red);
+  opacity: 0.6;
+  padding: 8px;
+  border-radius: 8px;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  transition: opacity 0.2s, background-color 0.2s;
+  justify-self: end;
+}
+
+.delete-session-button:hover {
+  opacity: 1;
+  background-color: rgba(255, 108, 114, 0.1);
 }
