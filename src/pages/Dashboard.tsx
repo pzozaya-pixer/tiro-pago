@@ -8,6 +8,7 @@ import { formatAverage, formatDate } from '../lib/scoring';
 
 export function Dashboard() {
   const tiradas = useTrainingStore((state) => state.tiradas);
+  const userPhone = useTrainingStore((state) => state.userPhone);
   const weekly = tiradas.slice(0, 8);
   const totalShots = weekly.reduce((sum, tirada) => sum + tirada.totalShots, 0);
   const totalScore = weekly.reduce((sum, tirada) => sum + tirada.totalScore, 0);
@@ -23,7 +24,7 @@ export function Dashboard() {
             <h1>
               TIRO<span>22</span>
             </h1>
-            <p>Tu entrenamiento, tu progreso</p>
+            <p>Tu progreso · <span style={{ color: 'var(--green)', fontWeight: 700 }}>{userPhone}</span></p>
           </div>
         </div>
       </header>
@@ -32,12 +33,12 @@ export function Dashboard() {
         <h2>Acciones rápidas</h2>
         <div className="quick-actions">
           <Link to="/nueva-tanda" className="quick-card quick-card--primary">
-            <Crosshair size={54} />
+            <Crosshair size={34} />
             <strong>Nueva tanda</strong>
             <span>Registrar 5 disparos</span>
           </Link>
           <Link to="/nueva-tirada" className="quick-card">
-            <Plus size={48} />
+            <Plus size={32} />
             <strong>Nueva tirada</strong>
             <span>Crear tirada completa</span>
           </Link>

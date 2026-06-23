@@ -219,13 +219,13 @@ a {
 }
 
 .quick-card {
-  min-height: 146px;
+  min-height: 98px;
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  gap: 10px;
-  padding: 20px 12px;
+  gap: 4px;
+  padding: 12px 10px;
   border-radius: var(--radius-lg);
   background: linear-gradient(145deg, rgba(30, 40, 49, 0.92), rgba(19, 26, 34, 0.92));
   color: var(--muted);
@@ -238,11 +238,11 @@ a {
 
 .quick-card strong {
   color: var(--text);
-  font-size: 1.25rem;
+  font-size: 1.05rem;
 }
 
 .quick-card span {
-  font-size: 0.95rem;
+  font-size: 0.8rem;
 }
 
 .quick-card--primary {
