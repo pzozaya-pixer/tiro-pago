@@ -1,4 +1,4 @@
-FROM node:20-alpine AS deps
+FROM node:22-alpine AS deps
 WORKDIR /app
 RUN corepack enable && corepack prepare pnpm@11.5.3 --activate
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
@@ -8,7 +8,7 @@ COPY server/prisma ./server/prisma
 WORKDIR /app/server
 RUN pnpm prisma:generate
 
-FROM node:20-alpine AS build
+FROM node:22-alpine AS build
 WORKDIR /app
 RUN corepack enable && corepack prepare pnpm@11.5.3 --activate
 COPY --from=deps /app/node_modules ./node_modules
@@ -17,7 +17,7 @@ COPY server ./server
 WORKDIR /app/server
 RUN pnpm build
 
-FROM node:20-alpine
+FROM node:22-alpine
 WORKDIR /app/server
 ENV NODE_ENV=production
 COPY --from=deps /app/node_modules /app/node_modules
