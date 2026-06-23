@@ -1,4 +1,8 @@
 FROM node:22-alpine AS build
+ARG VITE_DATA_PROVIDER=api
+ARG VITE_API_URL=/api
+ENV VITE_DATA_PROVIDER=$VITE_DATA_PROVIDER
+ENV VITE_API_URL=$VITE_API_URL
 WORKDIR /app
 RUN corepack enable && corepack prepare pnpm@11.5.3 --activate
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./

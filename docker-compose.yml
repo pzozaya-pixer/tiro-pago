@@ -38,6 +38,9 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+      args:
+        - VITE_DATA_PROVIDER=${VITE_DATA_PROVIDER:-api}
+        - VITE_API_URL=${VITE_API_URL:-/api}
     container_name: tiro22-web
     environment:
       APP_URL: ${APP_URL:-http://localhost:8080}
