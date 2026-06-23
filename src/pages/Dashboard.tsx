@@ -32,15 +32,15 @@ export function Dashboard() {
       <section>
         <h2>Acciones rápidas</h2>
         <div className="quick-actions">
-          <Link to="/nueva-tanda" className="quick-card quick-card--primary">
-            <Crosshair size={34} />
-            <strong>Nueva tanda</strong>
-            <span>Registrar 5 disparos</span>
-          </Link>
           <Link to="/nueva-tirada" className="quick-card">
             <Plus size={32} />
             <strong>Nueva tirada</strong>
             <span>Crear tirada completa</span>
+          </Link>
+          <Link to="/nueva-tanda" className="quick-card quick-card--primary">
+            <Crosshair size={34} />
+            <strong>Nueva tanda</strong>
+            <span>Registrar 5 disparos</span>
           </Link>
         </div>
       </section>
