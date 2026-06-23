@@ -35,7 +35,7 @@ export function NewRound() {
       });
 
     saveRound({ sessionId: tirada.id, shots });
-    navigate('/tiradas');
+    navigate('/');
   }
 
   return (
@@ -116,6 +116,17 @@ export function NewRound() {
             </button>
           ))}
         </div>
+
+        <div className="round-actions" style={{ marginTop: '20px' }}>
+          <button className="ghost-button" type="button" onClick={() => setShots((current) => current.slice(0, -1))}>
+            <Eraser size={20} />
+            Borrar último
+          </button>
+          <button className="primary-button" type="button" disabled={!isComplete} onClick={handleSave}>
+            <Save size={22} />
+            Guardar Tanda
+          </button>
+        </div>
       </section>
 
       <section className="stats-strip">
@@ -140,17 +151,6 @@ export function NewRound() {
           <strong>{shots.length ? stats.worstShot : '-'}</strong>
         </div>
       </section>
-
-      <div className="round-actions">
-        <button className="ghost-button" type="button" onClick={() => setShots((current) => current.slice(0, -1))}>
-          <Eraser size={20} />
-          Borrar último
-        </button>
-        <button className="primary-button" type="button" disabled={!isComplete} onClick={handleSave}>
-          <Save size={22} />
-          Guardar Tanda
-        </button>
-      </div>
     </div>
   );
 }
