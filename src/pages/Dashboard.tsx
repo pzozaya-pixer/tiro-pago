@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { Bell, Crosshair, Plus, TrendingUp, Trophy } from 'lucide-react';
+import { Crosshair, Plus, TrendingUp, Trophy } from 'lucide-react';
 import { BrandMark } from '../components/BrandMark';
 import { ProgressChart } from '../components/ProgressChart';
 import { SessionRow } from '../components/SessionRow';
@@ -26,10 +26,6 @@ export function Dashboard() {
             <p>Tu entrenamiento, tu progreso</p>
           </div>
         </div>
-        <button className="icon-button" aria-label="Notificaciones">
-          <Bell size={28} />
-          <span />
-        </button>
       </header>
 
       <section>
