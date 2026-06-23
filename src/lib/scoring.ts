@@ -1,4 +1,4 @@
-import type { Round, TrainingSession } from '../types';
+import type { Round, Tirada } from '../types';
 
 export function scoreRound(shots: number[]) {
   const totalScore = shots.reduce((sum, shot) => sum + shot, 0);
@@ -14,7 +14,7 @@ export function scoreRound(shots: number[]) {
   };
 }
 
-export function recalculateSession(session: TrainingSession, rounds: Round[]): TrainingSession {
+export function recalculateSession(session: Tirada, rounds: Round[]): Tirada {
   const totalScore = rounds.reduce((sum, round) => sum + round.totalScore, 0);
   const totalShots = rounds.reduce((sum, round) => sum + round.shots.length, 0);
 

@@ -4,14 +4,14 @@ import { formatAverage, formatDate } from '../lib/scoring';
 import { ChevronDown, ChevronUp } from 'lucide-react';
 
 export function History() {
-  const sessions = useTrainingStore((state) => state.sessions);
+  const tiradas = useTrainingStore((state) => state.tiradas);
   const rounds = useTrainingStore((state) => state.rounds);
   const [expandedSessionId, setExpandedSessionId] = useState<string | null>(null);
 
   const bestRound = rounds.reduce((best, round) => (round.totalScore > (best?.totalScore ?? -1) ? round : best), rounds[0]);
   const worstRound = rounds.reduce((worst, round) => (round.totalScore < (worst?.totalScore ?? 99) ? round : worst), rounds[0]);
-  const totalShots = sessions.reduce((sum, session) => sum + session.totalShots, 0);
-  const totalScore = sessions.reduce((sum, session) => sum + session.totalScore, 0);
+  const totalShots = tiradas.reduce((sum, tirada) => sum + tirada.totalShots, 0);
+  const totalScore = tiradas.reduce((sum, tirada) => sum + tirada.totalScore, 0);
 
   return (
     <div className="page list-page">
@@ -40,24 +40,24 @@ export function History() {
       </div>
 
       <section>
-        <h2>Histórico de sesiones</h2>
+        <h2>Histórico de tiradas</h2>
         <div className="simple-list">
-          {sessions.map((session) => {
-            const isExpanded = expandedSessionId === session.id;
-            const sessionRounds = rounds.filter((r) => r.sessionId === session.id);
-            const modality = findModality(session.modalityId);
+          {tiradas.map((tirada) => {
+            const isExpanded = expandedSessionId === tirada.id;
+            const sessionRounds = rounds.filter((r) => r.sessionId === tirada.id);
+            const modality = findModality(tirada.modalityId);
 
             return (
               <article
-                key={session.id}
+                key={tirada.id}
                 className="history-session-card"
-                onClick={() => setExpandedSessionId(isExpanded ? null : session.id)}
+                onClick={() => setExpandedSessionId(isExpanded ? null : tirada.id)}
               >
                 <div className="history-session-card__header">
                   <div>
                     <strong>{modality.name.replace(' .22 LR', '')}</strong>
                     <span>
-                      {formatDate(session.date)} · {session.totalShots} disparos · media {formatAverage(session.averageScore)}
+                      {formatDate(tirada.date)} · {tirada.totalShots} disparos · media {formatAverage(tirada.averageScore)}
                     </span>
                   </div>
                   <div className="history-session-card__toggle">
@@ -68,7 +68,7 @@ export function History() {
                 {isExpanded && (
                   <div className="session-detail-rounds" onClick={(e) => e.stopPropagation()}>
                     {sessionRounds.length === 0 ? (
-                      <p className="no-rounds-text">No hay tandas registradas en esta sesión.</p>
+                      <p className="no-rounds-text">No hay tandas registradas en esta tirada.</p>
                     ) : (
                       sessionRounds.map((round) => (
                         <div key={round.id} className="session-detail-round-row">

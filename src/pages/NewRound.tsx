@@ -9,14 +9,14 @@ const scoreButtons = [10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0, 'M'] as const;
 
 export function NewRound() {
   const navigate = useNavigate();
-  const activeSession = useTrainingStore((state) => state.getActiveSession());
-  const createSession = useTrainingStore((state) => state.createSession);
+  const activeTirada = useTrainingStore((state) => state.getActiveTirada());
+  const createTirada = useTrainingStore((state) => state.createTirada);
   const saveRound = useTrainingStore((state) => state.saveRound);
   const rounds = useTrainingStore((state) => state.rounds);
-  const [selectedModalityId, setSelectedModalityId] = useState(activeSession?.modalityId ?? modalities[0].id);
+  const [selectedModalityId, setSelectedModalityId] = useState(activeTirada?.modalityId ?? modalities[0].id);
   const [shots, setShots] = useState<number[]>([]);
-  const modality = findModality(activeSession?.modalityId ?? selectedModalityId);
-  const sessionRounds = activeSession ? rounds.filter((round) => round.sessionId === activeSession.id) : [];
+  const modality = findModality(activeTirada?.modalityId ?? selectedModalityId);
+  const sessionRounds = activeTirada ? rounds.filter((round) => round.sessionId === activeTirada.id) : [];
   const stats = useMemo(() => scoreRound(shots), [shots]);
   const isComplete = shots.length === 5;
 
@@ -26,16 +26,16 @@ export function NewRound() {
   }
 
   function handleSave() {
-    const session =
-      activeSession ??
-      createSession({
+    const tirada =
+      activeTirada ??
+      createTirada({
         modalityId: selectedModalityId,
         type: 'entrenamiento',
         date: new Date().toISOString()
       });
 
-    saveRound({ sessionId: session.id, shots });
-    navigate('/sesiones');
+    saveRound({ sessionId: tirada.id, shots });
+    navigate('/tiradas');
   }
 
   return (
@@ -52,7 +52,7 @@ export function NewRound() {
         <div className="round-context__main">
           <Crosshair size={46} />
           <div>
-            {activeSession ? (
+            {activeTirada ? (
               <>
                 <strong>{modality.name.replace(' .22 LR', '')}</strong>
                 <span>{modality.caliber}</span>
@@ -79,9 +79,9 @@ export function NewRound() {
           </span>
           <span>
             <Tag size={18} />
-            {activeSession?.type ?? 'entrenamiento'}
+            {activeTirada?.type ?? 'entrenamiento'}
           </span>
-          <Link to="/nueva-sesion">Cambiar</Link>
+          <Link to="/nueva-tirada">Cambiar</Link>
         </div>
       </section>
 

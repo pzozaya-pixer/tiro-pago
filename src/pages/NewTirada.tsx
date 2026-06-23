@@ -2,19 +2,19 @@ import { useNavigate } from 'react-router-dom';
 import { Calendar, Save } from 'lucide-react';
 import { modalities } from '../data/modalities';
 import { useTrainingStore } from '../store/useTrainingStore';
-import type { SessionType } from '../types';
+import type { TiradaType } from '../types';
 import { useState } from 'react';
 
-export function NewSession() {
+export function NewTirada() {
   const navigate = useNavigate();
-  const createSession = useTrainingStore((state) => state.createSession);
+  const createTirada = useTrainingStore((state) => state.createTirada);
   const [modalityId, setModalityId] = useState(modalities[0].id);
-  const [type, setType] = useState<SessionType>('entrenamiento');
+  const [type, setType] = useState<TiradaType>('entrenamiento');
   const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
 
   function handleSubmit(event: React.FormEvent) {
     event.preventDefault();
-    createSession({
+    createTirada({
       modalityId,
       type,
       date: new Date(date).toISOString()
@@ -25,7 +25,7 @@ export function NewSession() {
   return (
     <form className="page form-page" onSubmit={handleSubmit}>
       <header className="compact-header">
-        <h1>Nueva sesión</h1>
+        <h1>Nueva tirada</h1>
         <p>Selecciona modalidad y tipo de entrenamiento.</p>
       </header>
 
@@ -41,7 +41,7 @@ export function NewSession() {
       </label>
 
       <div className="segmented">
-        {(['entrenamiento', 'competicion'] as SessionType[]).map((item) => (
+        {(['entrenamiento', 'competicion'] as TiradaType[]).map((item) => (
           <button key={item} type="button" className={type === item ? 'is-active' : ''} onClick={() => setType(item)}>
             {item}
           </button>
@@ -58,7 +58,7 @@ export function NewSession() {
 
       <button className="primary-button" type="submit">
         <Save size={22} />
-        Crear sesión
+        Crear tirada
       </button>
     </form>
   );

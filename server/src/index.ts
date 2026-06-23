@@ -237,14 +237,33 @@ app.delete('/sessions/:id', async (request, response) => {
   }
 });
 
+app.post('/register', async (request, response) => {
+  try {
+    const { phone } = z.object({ phone: z.string() }).parse(request.body);
+    const user = await prisma.user.upsert({
+      where: { id: phone },
+      update: {},
+      create: {
+        id: phone,
+        email: `${phone}@tiro22.local`,
+        name: `Tirador ${phone}`
+      }
+    });
+    response.status(200).json(user);
+  } catch (error) {
+    console.error('Error registering user:', error);
+    response.status(500).json({ error: 'Failed to register user' });
+  }
+});
+
 async function ensureDemoUser(id: string) {
   await prisma.user.upsert({
     where: { id },
     update: {},
     create: {
       id,
-      email: 'demo@tiro22.local',
-      name: 'Tirador demo'
+      email: `${id}@tiro22.local`,
+      name: `Tirador ${id}`
     }
   });
 }

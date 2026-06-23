@@ -4,35 +4,35 @@ import { modalities } from '../data/modalities';
 import { createId } from '../lib/id';
 import { recalculateSession, scoreRound } from '../lib/scoring';
 import { enqueueSync, flushQueue } from '../lib/sync';
-import type { Round, SessionType, TrainingSession, Weapon } from '../types';
-
-const demoUserId = 'demo-user';
+import type { Round, TiradaType, Tirada, Weapon } from '../types';
 
 type TrainingState = {
-  sessions: TrainingSession[];
+  userPhone: string | null;
+  tiradas: Tirada[];
   rounds: Round[];
   weapons: Weapon[];
-  activeSessionId?: string;
-  createSession: (input: {
+  activeTiradaId?: string;
+  registerUser: (phone: string) => Promise<void>;
+  createTirada: (input: {
     modalityId: string;
     weaponId?: string;
-    type: SessionType;
+    type: TiradaType;
     date: string;
     notes?: string;
-  }) => TrainingSession;
+  }) => Tirada;
   saveRound: (input: { sessionId: string; shots: number[] }) => Round;
-  setActiveSession: (sessionId: string) => void;
-  getActiveSession: () => TrainingSession | undefined;
+  setActiveTirada: (tiradaId: string) => void;
+  getActiveTirada: () => Tirada | undefined;
   loadFromApi: () => Promise<void>;
-  deleteSession: (id: string) => void;
+  deleteTirada: (id: string) => void;
 };
 
 const today = new Date().toISOString();
 
-const seedSessions: TrainingSession[] = [
+const seedTiradas: Tirada[] = [
   {
     id: 'seed-session-1',
-    userId: demoUserId,
+    userId: 'demo-user',
     modalityId: 'pistol-25',
     type: 'entrenamiento',
     date: '2026-06-22T09:00:00.000Z',
@@ -43,7 +43,7 @@ const seedSessions: TrainingSession[] = [
   },
   {
     id: 'seed-session-2',
-    userId: demoUserId,
+    userId: 'demo-user',
     modalityId: 'rifle-50',
     type: 'entrenamiento',
     date: '2026-06-20T10:30:00.000Z',
@@ -54,7 +54,7 @@ const seedSessions: TrainingSession[] = [
   },
   {
     id: 'seed-session-3',
-    userId: demoUserId,
+    userId: 'demo-user',
     modalityId: 'rapid-pistol-25',
     type: 'competicion',
     date: '2026-06-18T17:15:00.000Z',
@@ -68,12 +68,13 @@ const seedSessions: TrainingSession[] = [
 export const useTrainingStore = create<TrainingState>()(
   persist(
     (set, get) => ({
-      sessions: seedSessions,
+      userPhone: null,
+      tiradas: seedTiradas,
       rounds: [],
       weapons: [
         {
           id: 'weapon-pistol',
-          userId: demoUserId,
+          userId: 'demo-user',
           name: 'Pistola estándar .22',
           type: 'pistol',
           caliber: '.22 LR',
@@ -82,7 +83,7 @@ export const useTrainingStore = create<TrainingState>()(
         },
         {
           id: 'weapon-rifle',
-          userId: demoUserId,
+          userId: 'demo-user',
           name: 'Carabina match .22',
           type: 'rifle',
           caliber: '.22 LR',
@@ -90,11 +91,30 @@ export const useTrainingStore = create<TrainingState>()(
           createdAt: today
         }
       ],
-      activeSessionId: 'seed-session-1',
-      createSession: (input) => {
-        const session: TrainingSession = {
-          id: createId('session'),
-          userId: demoUserId,
+      activeTiradaId: 'seed-session-1',
+      registerUser: async (phone) => {
+        set({ userPhone: phone });
+
+        // Registrar en el backend si el proveedor es api
+        const provider = import.meta.env.VITE_DATA_PROVIDER ?? 'local';
+        if (provider === 'api') {
+          const apiUrl = import.meta.env.VITE_API_URL ?? '/api';
+          try {
+            await fetch(`${apiUrl}/register`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ phone })
+            });
+          } catch (error) {
+            console.error('Error registering user on backend:', error);
+          }
+        }
+      },
+      createTirada: (input) => {
+        const userId = get().userPhone ?? 'demo-user';
+        const tirada: Tirada = {
+          id: createId('session'), // Mantenemos el prefijo de ID 'session' para compatibilidad
+          userId,
           modalityId: input.modalityId,
           weaponId: input.weaponId,
           type: input.type,
@@ -107,17 +127,17 @@ export const useTrainingStore = create<TrainingState>()(
         };
 
         set((state) => ({
-          sessions: [session, ...state.sessions],
-          activeSessionId: session.id
+          tiradas: [tirada, ...state.tiradas],
+          activeTiradaId: tirada.id
         }));
-        enqueueSync({ type: 'session:create', payload: session });
+        enqueueSync({ type: 'session:create', payload: tirada as any }); // Sigue encolándose como 'session:create' para compatibilidad con la API
 
         const provider = import.meta.env.VITE_DATA_PROVIDER ?? 'local';
         if (provider === 'api' && navigator.onLine) {
           flushQueue(import.meta.env.VITE_API_URL ?? '/api').catch(console.error);
         }
 
-        return session;
+        return tirada;
       },
       saveRound: ({ sessionId, shots }) => {
         const sessionRounds = get().rounds.filter((round) => round.sessionId === sessionId);
@@ -135,13 +155,13 @@ export const useTrainingStore = create<TrainingState>()(
           const nextRounds = [round, ...state.rounds];
           return {
             rounds: nextRounds,
-            sessions: state.sessions.map((session) =>
-              session.id === sessionId
-                ? recalculateSession(
-                    session,
+            tiradas: state.tiradas.map((tirada) =>
+              tirada.id === sessionId
+                ? (recalculateSession(
+                    tirada as any,
                     nextRounds.filter((item) => item.sessionId === sessionId)
-                  )
-                : session
+                  ) as any)
+                : tirada
             )
           };
         });
@@ -154,18 +174,18 @@ export const useTrainingStore = create<TrainingState>()(
 
         return round;
       },
-      setActiveSession: (sessionId) => set({ activeSessionId: sessionId }),
-      getActiveSession: () => {
-        const { activeSessionId, sessions } = get();
-        return sessions.find((session) => session.id === activeSessionId);
+      setActiveTirada: (tiradaId) => set({ activeTiradaId: tiradaId }),
+      getActiveTirada: () => {
+        const { activeTiradaId, tiradas } = get();
+        return tiradas.find((tirada) => tirada.id === activeTiradaId);
       },
-      deleteSession: (id) => {
+      deleteTirada: (id) => {
         set((state) => ({
-          sessions: state.sessions.filter((session) => session.id !== id),
+          tiradas: state.tiradas.filter((tirada) => tirada.id !== id),
           rounds: state.rounds.filter((round) => round.sessionId !== id),
-          activeSessionId: state.activeSessionId === id ? undefined : state.activeSessionId
+          activeTiradaId: state.activeTiradaId === id ? undefined : state.activeTiradaId
         }));
-        enqueueSync({ type: 'session:delete', payload: { id } });
+        enqueueSync({ type: 'session:delete', payload: { id } as any });
 
         const provider = import.meta.env.VITE_DATA_PROVIDER ?? 'local';
         if (provider === 'api' && navigator.onLine) {
@@ -181,12 +201,12 @@ export const useTrainingStore = create<TrainingState>()(
           // 1. Enviar datos locales en cola antes de descargar
           await flushQueue(apiUrl);
 
-          // 2. Descargar sesiones con sus tandas
+          // 2. Descargar tiradas (sesiones) con sus tandas
           const response = await fetch(`${apiUrl}/sessions`);
           if (response.ok) {
             const remoteSessions = await response.json();
 
-            const sessionsList: TrainingSession[] = remoteSessions.map((s: any) => ({
+            const tiradasList: Tirada[] = remoteSessions.map((s: any) => ({
               id: s.id,
               userId: s.userId,
               modalityId: s.modalityId,
@@ -215,7 +235,7 @@ export const useTrainingStore = create<TrainingState>()(
             );
 
             set({
-              sessions: sessionsList.length ? sessionsList : seedSessions,
+              tiradas: tiradasList.length ? tiradasList : seedTiradas,
               rounds: roundsList
             });
           }

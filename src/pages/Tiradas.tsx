@@ -1,10 +1,10 @@
 import { Link } from 'react-router-dom';
 import { Plus } from 'lucide-react';
-import { SessionRow } from '../components/SessionRow';
+import { TiradaRow } from '../components/TiradaRow';
 import { useTrainingStore } from '../store/useTrainingStore';
 
-export function Sessions({ mode }: { mode?: 'weapons' | 'settings' }) {
-  const sessions = useTrainingStore((state) => state.sessions);
+export function Tiradas({ mode }: { mode?: 'weapons' | 'settings' }) {
+  const tiradas = useTrainingStore((state) => state.tiradas);
   const weapons = useTrainingStore((state) => state.weapons);
 
   if (mode === 'weapons') {
@@ -12,7 +12,7 @@ export function Sessions({ mode }: { mode?: 'weapons' | 'settings' }) {
       <div className="page list-page">
         <header className="compact-header">
           <h1>Armas</h1>
-          <p>Armas preparadas para sesiones de pistola y carabina .22 LR.</p>
+          <p>Armas preparadas para tiradas de pistola y carabina .22 LR.</p>
         </header>
         <div className="simple-list">
           {weapons.map((weapon) => (
@@ -45,16 +45,16 @@ export function Sessions({ mode }: { mode?: 'weapons' | 'settings' }) {
     <div className="page list-page">
       <header className="compact-header compact-header--row">
         <div>
-          <h1>Sesiones</h1>
-          <p>Resumen de sesiones y totales acumulados.</p>
+          <h1>Tiradas</h1>
+          <p>Resumen de tiradas y totales acumulados.</p>
         </div>
-        <Link className="round-add" to="/nueva-sesion" aria-label="Nueva sesión">
+        <Link className="round-add" to="/nueva-tirada" aria-label="Nueva tirada">
           <Plus />
         </Link>
       </header>
       <div className="session-list">
-        {sessions.map((session) => (
-          <SessionRow key={session.id} session={session} />
+        {tiradas.map((tirada) => (
+          <TiradaRow key={tirada.id} tirada={tirada} />
         ))}
       </div>
     </div>

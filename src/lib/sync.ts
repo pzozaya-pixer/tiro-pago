@@ -1,9 +1,9 @@
-import type { Round, TrainingSession } from '../types';
+import type { Round, Tirada } from '../types';
 
 const queueKey = 'tiro22:offline-queue';
 
 type QueueItem =
-  | { type: 'session:create'; payload: TrainingSession; createdAt: string }
+  | { type: 'session:create'; payload: Tirada; createdAt: string }
   | { type: 'round:create'; payload: Round; createdAt: string }
   | { type: 'session:delete'; payload: { id: string }; createdAt: string };
 

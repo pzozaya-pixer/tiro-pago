@@ -1,5 +1,5 @@
 export type WeaponType = 'pistol' | 'rifle';
-export type SessionType = 'entrenamiento' | 'competicion';
+export type TiradaType = 'entrenamiento' | 'competicion';
 export type DataProvider = 'local' | 'api' | 'supabase';
 
 export type Modality = {
@@ -23,12 +23,12 @@ export type Weapon = {
   createdAt: string;
 };
 
-export type TrainingSession = {
+export type Tirada = {
   id: string;
   userId: string;
   modalityId: string;
   weaponId?: string;
-  type: SessionType;
+  type: TiradaType;
   date: string;
   notes?: string;
   totalScore: number;
@@ -39,7 +39,7 @@ export type TrainingSession = {
 
 export type Round = {
   id: string;
-  sessionId: string;
+  sessionId: string; // Mantenemos sessionId para mapeo directo con la base de datos relacional
   roundNumber: number;
   shots: number[];
   totalScore: number;
@@ -49,7 +49,7 @@ export type Round = {
   createdAt: string;
 };
 
-export type SessionWithRounds = TrainingSession & {
+export type TiradaWithRounds = Tirada & {
   modality: Modality;
   rounds: Round[];
 };

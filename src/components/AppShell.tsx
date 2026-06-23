@@ -4,7 +4,7 @@ import { BarChart3, Crosshair, Home, ListChecks, Settings, Shield } from 'lucide
 
 const navItems = [
   { to: '/', label: 'Inicio', icon: Home },
-  { to: '/sesiones', label: 'Sesiones', icon: Crosshair },
+  { to: '/tiradas', label: 'Tiradas', icon: Crosshair },
   { to: '/historial', label: 'Historial', icon: BarChart3 },
   { to: '/armas', label: 'Armas', icon: Shield },
   { to: '/ajustes', label: 'Ajustes', icon: Settings }

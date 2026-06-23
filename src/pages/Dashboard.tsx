@@ -2,16 +2,16 @@ import { Link } from 'react-router-dom';
 import { Crosshair, Plus, TrendingUp, Trophy } from 'lucide-react';
 import { BrandMark } from '../components/BrandMark';
 import { ProgressChart } from '../components/ProgressChart';
-import { SessionRow } from '../components/SessionRow';
+import { TiradaRow } from '../components/TiradaRow';
 import { useTrainingStore } from '../store/useTrainingStore';
 import { formatAverage, formatDate } from '../lib/scoring';
 
 export function Dashboard() {
-  const sessions = useTrainingStore((state) => state.sessions);
-  const weekly = sessions.slice(0, 8);
-  const totalShots = weekly.reduce((sum, session) => sum + session.totalShots, 0);
-  const totalScore = weekly.reduce((sum, session) => sum + session.totalScore, 0);
-  const bestSession = weekly.reduce<any>((best, session) => (!best || session.totalScore > best.totalScore ? session : best), null);
+  const tiradas = useTrainingStore((state) => state.tiradas);
+  const weekly = tiradas.slice(0, 8);
+  const totalShots = weekly.reduce((sum, tirada) => sum + tirada.totalShots, 0);
+  const totalScore = weekly.reduce((sum, tirada) => sum + tirada.totalScore, 0);
+  const bestTirada = weekly.reduce<any>((best, tirada) => (!best || tirada.totalScore > best.totalScore ? tirada : best), null);
   const average = totalShots ? totalScore / totalShots : 0;
 
   return (
@@ -36,22 +36,22 @@ export function Dashboard() {
             <strong>Nueva tanda</strong>
             <span>Registrar 5 disparos</span>
           </Link>
-          <Link to="/nueva-sesion" className="quick-card">
+          <Link to="/nueva-tirada" className="quick-card">
             <Plus size={48} />
-            <strong>Nueva sesión</strong>
-            <span>Crear sesión completa</span>
+            <strong>Nueva tirada</strong>
+            <span>Crear tirada completa</span>
           </Link>
         </div>
       </section>
 
       <section>
         <div className="section-title">
-          <h2>Mis sesiones recientes</h2>
-          <Link to="/sesiones">Ver todas</Link>
+          <h2>Mis tiradas recientes</h2>
+          <Link to="/tiradas">Ver todas</Link>
         </div>
         <div className="session-list">
-          {sessions.slice(0, 3).map((session) => (
-            <SessionRow key={session.id} session={session} />
+          {tiradas.slice(0, 3).map((tirada) => (
+            <TiradaRow key={tirada.id} tirada={tirada} />
           ))}
         </div>
       </section>
@@ -62,7 +62,7 @@ export function Dashboard() {
           <div>
             <Crosshair />
             <strong>{weekly.length}</strong>
-            <span>Sesiones</span>
+            <span>Tiradas</span>
           </div>
           <div>
             <Trophy />
@@ -76,10 +76,10 @@ export function Dashboard() {
           </div>
           <div>
             <Trophy />
-            <strong>{bestSession ? bestSession.totalScore : 0}</strong>
+            <strong>{bestTirada ? bestTirada.totalScore : 0}</strong>
             <span>Mejor puntuación</span>
-            {bestSession && (
-              <span className="summary-date">{formatDate(bestSession.date)}</span>
+            {bestTirada && (
+              <span className="summary-date">{formatDate(bestTirada.date)}</span>
             )}
           </div>
         </div>

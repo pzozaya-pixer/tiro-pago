@@ -1,42 +1,99 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Navigate, Route, Routes } from 'react-router-dom';
 import { AppShell } from './components/AppShell';
 import { Dashboard } from './pages/Dashboard';
 import { History } from './pages/History';
 import { NewRound } from './pages/NewRound';
-import { NewSession } from './pages/NewSession';
-import { Sessions } from './pages/Sessions';
+import { NewTirada } from './pages/NewTirada';
+import { Tiradas } from './pages/Tiradas';
 import { useTrainingStore } from './store/useTrainingStore';
 
 export default function App() {
   const loadFromApi = useTrainingStore((state) => state.loadFromApi);
+  const userPhone = useTrainingStore((state) => state.userPhone);
+  const registerUser = useTrainingStore((state) => state.registerUser);
+
+  const [phone, setPhone] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
-    // Carga inicial y sincronización de datos de la API
-    loadFromApi();
+    // Carga inicial y sincronización de datos de la API solo si hay usuario registrado
+    if (userPhone) {
+      loadFromApi();
+    }
 
     const handleOnline = () => {
-      loadFromApi();
+      if (userPhone) {
+        loadFromApi();
+      }
     };
 
     window.addEventListener('online', handleOnline);
     return () => {
       window.removeEventListener('online', handleOnline);
     };
-  }, [loadFromApi]);
+  }, [loadFromApi, userPhone]);
+
+  const handleSubmitPhone = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const cleanPhone = phone.trim();
+    if (!cleanPhone) return;
+    setIsSubmitting(true);
+    try {
+      await registerUser(cleanPhone);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  // Si no hay teléfono registrado, bloqueamos la app con el onboarding
+  if (!userPhone) {
+    return (
+      <div className="onboarding-screen">
+        <form className="onboarding-card" onSubmit={handleSubmitPhone}>
+          <div className="onboarding-logo">
+            <div className="brand-mark">
+              <span></span>
+              <i></i>
+            </div>
+            <h1>Tiro<span>22</span></h1>
+            <p>Registra tu número de teléfono para comenzar a guardar tus tiradas y tandas de forma segura.</p>
+          </div>
+          <label className="field">
+            <span>Número de Teléfono</span>
+            <input
+              type="tel"
+              placeholder="Ej. 600000000"
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
+              required
+              disabled={isSubmitting}
+              autoFocus
+            />
+          </label>
+          <button className="primary-button" type="submit" disabled={isSubmitting || !phone.trim()}>
+            {isSubmitting ? 'Registrando...' : 'Comenzar'}
+          </button>
+        </form>
+      </div>
+    );
+  }
 
   return (
     <AppShell>
       <Routes>
         <Route path="/" element={<Dashboard />} />
         <Route path="/nueva-tanda" element={<NewRound />} />
-        <Route path="/nueva-sesion" element={<NewSession />} />
-        <Route path="/sesiones" element={<Sessions />} />
+        <Route path="/nueva-tirada" element={<NewTirada />} />
+        <Route path="/tiradas" element={<Tiradas />} />
         <Route path="/historial" element={<History />} />
-        <Route path="/armas" element={<Sessions mode="weapons" />} />
-        <Route path="/ajustes" element={<Sessions mode="settings" />} />
+        <Route path="/armas" element={<Tiradas mode="weapons" />} />
+        <Route path="/ajustes" element={<Tiradas mode="settings" />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </AppShell>
   );
 }
+
