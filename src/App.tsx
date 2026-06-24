@@ -54,9 +54,13 @@ export default function App() {
       <div className="onboarding-screen">
         <form className="onboarding-card" onSubmit={handleSubmitPhone}>
           <div className="onboarding-logo">
-            <div className="brand-mark">
-              <span></span>
-              <i></i>
+            <div className="header-logo-container" style={{ marginBottom: '10px' }}>
+              <img
+                src={`${import.meta.env.BASE_URL}icon-512.png`}
+                alt="Agencia Pixer"
+                className="header-logo"
+                style={{ width: '80px', height: '80px', margin: '0 auto' }}
+              />
             </div>
             <h1>Tiro<span>22</span></h1>
             <p>Registra tu número de teléfono para comenzar a guardar tus tiradas y tandas de forma segura.</p>
