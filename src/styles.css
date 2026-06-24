@@ -1602,125 +1602,189 @@ a {
   }
 }
 
-/* Custom Modality Selector Cards for NewTirada */
-.modality-selector-container {
+/* Custom Responsive Dropdown Selector for Modality */
+.custom-dropdown-container {
   display: flex;
   flex-direction: column;
   gap: 8px;
   margin-bottom: 20px;
+  position: relative;
 }
 
-.field-label {
-  font-size: 0.92rem;
-  font-weight: 750;
-  color: var(--muted);
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
+.custom-dropdown {
+  position: relative;
+  width: 100%;
 }
 
-.modality-list {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  max-height: 280px; /* Limit height and make it scrollable if there are many */
-  overflow-y: auto;
-  padding-right: 4px;
-  /* Premium scrollbar styles */
-  scrollbar-width: thin;
-  scrollbar-color: rgba(255, 255, 255, 0.1) transparent;
-}
-
-.modality-list::-webkit-scrollbar {
-  width: 5px;
-}
-
-.modality-list::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.12);
-  border-radius: 10px;
-}
-
-.modality-select-card {
-  background: linear-gradient(145deg, rgba(255, 255, 255, 0.03), rgba(255, 255, 255, 0.01));
-  border: 1px solid rgba(255, 255, 255, 0.06);
-  border-radius: var(--radius-md);
-  padding: 14px 16px;
+.custom-dropdown__trigger {
+  min-height: 58px;
+  width: 100%;
+  background: rgba(255, 255, 255, 0.04) !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  border-radius: 14px !important;
+  padding: 14px 18px;
   display: flex;
   align-items: center;
   justify-content: space-between;
   text-align: left;
   cursor: pointer;
-  width: 100%;
-  transition: border-color 0.2s ease, background-color 0.2s ease, box-shadow 0.2s ease, transform 0.15s ease;
+  color: var(--text) !important;
+  font-size: 0.98rem;
+  font-weight: 750;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
-.modality-select-card:hover:not(.is-selected) {
-  border-color: rgba(255, 255, 255, 0.12);
-  background: rgba(255, 255, 255, 0.04);
+.custom-dropdown__trigger:hover,
+.custom-dropdown__trigger.is-open {
+  border-color: rgba(255, 255, 255, 0.16) !important;
 }
 
-.modality-select-card:active {
-  transform: scale(0.99);
-}
-
-.modality-select-card.is-selected {
+.custom-dropdown__trigger:focus {
   border-color: var(--green) !important;
-  background: rgba(72, 177, 56, 0.08) !important;
-  box-shadow: 0 0 16px rgba(72, 177, 56, 0.15);
+  box-shadow: 0 0 14px rgba(72, 177, 56, 0.2) !important;
+  outline: none;
 }
 
-.modality-select-card__main {
+.custom-dropdown__trigger-content {
   display: flex;
   align-items: center;
   gap: 12px;
   min-width: 0;
 }
 
-.modality-select-card__icon {
-  color: var(--muted);
+.custom-dropdown__icon {
+  color: var(--green);
   flex-shrink: 0;
-  transition: color 0.2s ease;
 }
 
-.modality-select-card.is-selected .modality-select-card__icon {
+.custom-dropdown__arrow {
+  color: var(--muted);
+  transition: transform 0.2s ease, color 0.2s ease;
+  flex-shrink: 0;
+}
+
+.custom-dropdown__trigger.is-open .custom-dropdown__arrow {
+  transform: rotate(180deg);
+  color: var(--text);
+}
+
+.custom-dropdown__overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 998;
+  background: transparent;
+}
+
+.custom-dropdown__menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  right: 0;
+  z-index: 999;
+  background: linear-gradient(145deg, rgba(32, 44, 55, 0.98), rgba(16, 24, 32, 0.99));
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 14px;
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.55);
+  max-height: 250px;
+  overflow-y: auto;
+  padding: 6px;
+  margin: 0;
+  list-style: none;
+  backdrop-filter: blur(15px);
+  -webkit-backdrop-filter: blur(15px);
+  /* Custom scrollbar */
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.1) transparent;
+  animation: dropdownFadeIn 0.15s ease-out;
+}
+
+.custom-dropdown__menu::-webkit-scrollbar {
+  width: 5px;
+}
+
+.custom-dropdown__menu::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.12);
+  border-radius: 10px;
+}
+
+.custom-dropdown__item {
+  width: 100%;
+  background: transparent !important;
+  border: 0 !important;
+  padding: 12px 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  text-align: left;
+  cursor: pointer;
+  color: var(--text) !important;
+  font-size: 0.92rem;
+  font-weight: 700;
+  border-radius: 10px;
+  transition: background-color 0.15s ease, transform 0.1s ease;
+}
+
+.custom-dropdown__item:hover {
+  background: rgba(255, 255, 255, 0.05) !important;
+}
+
+.custom-dropdown__item:active {
+  transform: scale(0.99);
+}
+
+.custom-dropdown__item.is-selected {
+  background: rgba(72, 177, 56, 0.08) !important;
+  color: var(--text) !important;
+  border: 1px solid rgba(72, 177, 56, 0.2) !important;
+}
+
+.custom-dropdown__item-main {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.custom-dropdown__item-icon {
+  color: var(--muted);
+  flex-shrink: 0;
+  transition: color 0.15s ease;
+}
+
+.custom-dropdown__item.is-selected .custom-dropdown__item-icon {
   color: var(--green);
 }
 
-.modality-select-card__name {
-  font-size: 0.98rem;
-  font-weight: 750;
-  color: var(--text);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  transition: color 0.2s ease;
-}
-
-.modality-select-card.is-selected .modality-select-card__name {
-  color: var(--text);
-}
-
-.modality-select-card__meta {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-left: 12px;
-  flex-shrink: 0;
-}
-
-.modality-select-card__meta .badge {
+.custom-dropdown__item-badge {
   background: rgba(255, 255, 255, 0.06);
   border: 1px solid rgba(255, 255, 255, 0.04);
   color: var(--muted);
-  padding: 4px 8px;
-  font-size: 0.76rem;
+  padding: 3px 6px;
+  font-size: 0.72rem;
   font-weight: 800;
-  border-radius: 8px;
-  transition: all 0.2s ease;
+  border-radius: 6px;
+  transition: all 0.15s ease;
+  flex-shrink: 0;
+  margin-left: 10px;
 }
 
-.modality-select-card.is-selected .badge {
+.custom-dropdown__item.is-selected .custom-dropdown__item-badge {
   background: rgba(72, 177, 56, 0.2);
   border-color: rgba(72, 177, 56, 0.3);
   color: #c4f2be;
+}
+
+@keyframes dropdownFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
