@@ -42,6 +42,7 @@ export type Round = {
   sessionId: string; // Mantenemos sessionId para mapeo directo con la base de datos relacional
   roundNumber: number;
   shots: number[];
+  isPrueba?: boolean;
   totalScore: number;
   averageScore: number;
   bestShot: number;

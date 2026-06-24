@@ -20,7 +20,11 @@ type TrainingState = {
     date: string;
     notes?: string;
   }) => Tirada;
-  saveRound: (input: { sessionId: string; shots: number[] }) => Round;
+  saveRound: (input: {
+    sessionId: string;
+    shots: number[];
+    isPrueba?: boolean;
+  }) => Round;
   setActiveTirada: (tiradaId: string) => void;
   getActiveTirada: () => Tirada | undefined;
   loadFromApi: () => Promise<void>;
@@ -139,7 +143,7 @@ export const useTrainingStore = create<TrainingState>()(
 
         return tirada;
       },
-      saveRound: ({ sessionId, shots }) => {
+      saveRound: ({ sessionId, shots, isPrueba }) => {
         const sessionRounds = get().rounds.filter((round) => round.sessionId === sessionId);
         const scored = scoreRound(shots);
         const round: Round = {
@@ -147,6 +151,7 @@ export const useTrainingStore = create<TrainingState>()(
           sessionId,
           roundNumber: sessionRounds.length + 1,
           shots,
+          isPrueba,
           ...scored,
           createdAt: new Date().toISOString()
         };
@@ -230,6 +235,7 @@ export const useTrainingStore = create<TrainingState>()(
                 averageScore: r.averageScore,
                 bestShot: r.bestShot,
                 worstShot: r.worstShot,
+                isPrueba: r.isPrueba,
                 createdAt: r.createdAt
               }))
             );

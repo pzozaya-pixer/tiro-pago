@@ -1,5 +1,6 @@
 import { Link, useNavigate } from 'react-router-dom';
-import { ArrowLeft, CalendarDays, Check, Crosshair, Eraser, Save, Tag } from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
+import { ArrowLeft, CalendarDays, Check, Crosshair, Eraser, Save, Tag, Trophy } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { modalities } from '../data/modalities';
 import { formatAverage, scoreRound } from '../lib/scoring';
@@ -15,10 +16,14 @@ export function NewRound() {
   const rounds = useTrainingStore((state) => state.rounds);
   const [selectedModalityId, setSelectedModalityId] = useState(activeTirada?.modalityId ?? modalities[0].id);
   const [shots, setShots] = useState<number[]>([]);
+  const [isPrueba, setIsPrueba] = useState(false);
   const modality = findModality(activeTirada?.modalityId ?? selectedModalityId);
   const sessionRounds = activeTirada ? rounds.filter((round) => round.sessionId === activeTirada.id) : [];
+  const competitionRounds = useMemo(() => sessionRounds.filter((r) => !r.isPrueba), [sessionRounds]);
   const stats = useMemo(() => scoreRound(shots), [shots]);
   const isComplete = shots.length === 5;
+
+  const isCompetitionCompleted = activeTirada?.type === 'competicion' && competitionRounds.length >= 12;
 
   function addShot(score: number | 'M') {
     if (shots.length >= 5) return;
@@ -34,7 +39,7 @@ export function NewRound() {
         date: new Date().toISOString()
       });
 
-    saveRound({ sessionId: tirada.id, shots });
+    saveRound({ sessionId: tirada.id, shots, isPrueba });
     navigate('/');
   }
 
@@ -87,72 +92,114 @@ export function NewRound() {
         </div>
       </section>
 
-      <section className="score-panel">
-        <div className="round-title">
-          <h2>Tanda {sessionRounds.length + 1}</h2>
-          <div>
-            <strong>Disparos</strong> {Math.min(shots.length + 1, 5)}/5
-            <span className="shot-dots">
-              {Array.from({ length: 5 }).map((_, index) => (
-                <i key={index} className={index < shots.length ? 'is-done' : ''} />
-              ))}
-            </span>
+      {isCompetitionCompleted ? (
+        <section className="score-panel competition-completed-panel">
+          <div className="completed-card">
+            <Trophy size={64} className="completed-icon" />
+            <h2>Competición Completada</h2>
+            <p>Has alcanzado el límite oficial de 12 tandas puntuables (60 disparos) para esta competición.</p>
+            <Link to="/" className="primary-button return-button">
+              Volver al Inicio
+            </Link>
           </div>
-        </div>
-
-        <div className="shot-slots">
-          {Array.from({ length: 5 }).map((_, index) => (
-            <div key={index} className={shots[index] !== undefined ? 'shot-slot is-filled' : 'shot-slot'}>
-              <span>{index + 1}</span>
-              <strong>{shots[index] ?? '-'}</strong>
+        </section>
+      ) : (
+        <>
+          <section className="score-panel">
+            <div className="round-title">
+              <h2>
+                {isPrueba
+                  ? 'Tanda de Prueba'
+                  : `Tanda ${
+                      activeTirada?.type === 'competicion'
+                        ? competitionRounds.length + 1
+                        : sessionRounds.length + 1
+                    }`}
+              </h2>
+              <div>
+                <strong>Disparos</strong> {Math.min(shots.length + 1, 5)}/5
+                <span className="shot-dots">
+                  {Array.from({ length: 5 }).map((_, index) => (
+                    <i key={index} className={index < shots.length ? 'is-done' : ''} />
+                  ))}
+                </span>
+              </div>
             </div>
-          ))}
-        </div>
 
-        <p className="score-panel__hint">Selecciona la puntuación</p>
-        <div className="score-grid">
-          {scoreButtons.map((score) => (
-            <button key={score} onClick={() => addShot(score)} disabled={isComplete}>
-              <strong>{score}</strong>
-              {score === 'M' && <span>Fallo</span>}
-            </button>
-          ))}
-        </div>
+            {activeTirada?.type === 'competicion' && sessionRounds.length === 0 && (
+              <div className="prueba-toggle-container">
+                <label className="prueba-toggle-label">
+                  <input
+                    type="checkbox"
+                    checked={isPrueba}
+                    onChange={(e) => {
+                      setIsPrueba(e.target.checked);
+                      // Limpiar disparos cuando se cambia el modo para evitar inconsistencias
+                      setShots([]);
+                    }}
+                    className="prueba-toggle-input"
+                  />
+                  <span className="prueba-toggle-slider" />
+                  <span className="prueba-toggle-text">¿Es una tanda de prueba (entrenamiento inicial)?</span>
+                </label>
+              </div>
+            )}
 
-        <div className="round-actions" style={{ marginTop: '20px' }}>
-          <button className="ghost-button" type="button" onClick={() => setShots((current) => current.slice(0, -1))}>
-            <Eraser size={20} />
-            Borrar último
-          </button>
-          <button className="primary-button" type="button" disabled={!isComplete} onClick={handleSave}>
-            <Save size={22} />
-            Guardar Tanda
-          </button>
-        </div>
-      </section>
+            <div className="shot-slots">
+              {Array.from({ length: 5 }).map((_, index) => (
+                <div key={index} className={shots[index] !== undefined ? 'shot-slot is-filled' : 'shot-slot'}>
+                  <span>{index + 1}</span>
+                  <strong>{shots[index] ?? '-'}</strong>
+                </div>
+              ))}
+            </div>
 
-      <section className="stats-strip">
-        <div>
-          <Crosshair />
-          <span>Total tanda</span>
-          <strong>{stats.totalScore} / 50</strong>
-        </div>
-        <div>
-          <Check />
-          <span>Media</span>
-          <strong>{formatAverage(stats.averageScore)}</strong>
-        </div>
-        <div>
-          <Check />
-          <span>Mejor</span>
-          <strong>{shots.length ? stats.bestShot : '-'}</strong>
-        </div>
-        <div>
-          <Check />
-          <span>Peor</span>
-          <strong>{shots.length ? stats.worstShot : '-'}</strong>
-        </div>
-      </section>
+            <p className="score-panel__hint">Selecciona la puntuación</p>
+            <div className="score-grid">
+              {scoreButtons.map((score) => (
+                <button key={score} onClick={() => addShot(score)} disabled={isComplete}>
+                  <strong>{score}</strong>
+                  {score === 'M' && <span>Fallo</span>}
+                </button>
+              ))}
+            </div>
+
+            <div className="round-actions" style={{ marginTop: '20px' }}>
+              <button className="ghost-button" type="button" onClick={() => setShots((current) => current.slice(0, -1))}>
+                <Eraser size={20} />
+                Borrar último
+              </button>
+              <button className="primary-button" type="button" disabled={!isComplete} onClick={handleSave}>
+                <Save size={22} />
+                Guardar Tanda
+              </button>
+            </div>
+          </section>
+
+          <section className="stats-strip">
+            <div>
+              <Crosshair />
+              <span>Total tanda</span>
+              <strong>{stats.totalScore} / 50</strong>
+            </div>
+            <div>
+              <Check />
+              <span>Media</span>
+              <strong>{formatAverage(stats.averageScore)}</strong>
+            </div>
+            <div>
+              <Check />
+              <span>Mejor</span>
+              <strong>{shots.length ? stats.bestShot : '-'}</strong>
+            </div>
+            <div>
+              <Check />
+              <span>Peor</span>
+              <strong>{shots.length ? stats.worstShot : '-'}</strong>
+            </div>
+          </section>
+        </>
+      )}
     </div>
   );
 }

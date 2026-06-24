@@ -8,8 +8,9 @@ export function History() {
   const rounds = useTrainingStore((state) => state.rounds);
   const [expandedSessionId, setExpandedSessionId] = useState<string | null>(null);
 
-  const bestRound = rounds.reduce((best, round) => (round.totalScore > (best?.totalScore ?? -1) ? round : best), rounds[0]);
-  const worstRound = rounds.reduce((worst, round) => (round.totalScore < (worst?.totalScore ?? 99) ? round : worst), rounds[0]);
+  const officialRounds = rounds.filter((r) => !r.isPrueba);
+  const bestRound = officialRounds.reduce((best, round) => (round.totalScore > (best?.totalScore ?? -1) ? round : best), officialRounds[0]);
+  const worstRound = officialRounds.reduce((worst, round) => (round.totalScore < (worst?.totalScore ?? 99) ? round : worst), officialRounds[0]);
   const totalShots = tiradas.reduce((sum, tirada) => sum + tirada.totalShots, 0);
   const totalScore = tiradas.reduce((sum, tirada) => sum + tirada.totalScore, 0);
 
@@ -95,20 +96,26 @@ export function History() {
                             </tr>
                           </thead>
                           <tbody>
-                            {sessionRounds.map((round) => (
-                              <tr key={round.id}>
-                                <td className="round-num-col">Tanda {round.roundNumber}</td>
-                                {Array.from({ length: 5 }).map((_, shotIdx) => {
-                                  const shot = round.shots[shotIdx];
-                                  return (
-                                    <td key={shotIdx} className="shot-val-col">
-                                      {shot === undefined ? '-' : shot === 0 ? 'M' : shot}
-                                    </td>
-                                  );
-                                })}
-                                <td className="round-total-col text-right">{round.totalScore} pts</td>
-                              </tr>
-                            ))}
+                            {(() => {
+                              let competitionCount = 0;
+                              return sessionRounds.map((round) => {
+                                const roundLabel = round.isPrueba ? 'Prueba' : `Tanda ${++competitionCount}`;
+                                return (
+                                  <tr key={round.id}>
+                                    <td className="round-num-col">{roundLabel}</td>
+                                    {Array.from({ length: 5 }).map((_, shotIdx) => {
+                                      const shot = round.shots[shotIdx];
+                                      return (
+                                        <td key={shotIdx} className="shot-val-col">
+                                          {shot === undefined ? '-' : shot === 0 ? 'M' : shot}
+                                        </td>
+                                      );
+                                    })}
+                                    <td className="round-total-col text-right">{round.totalScore} pts</td>
+                                  </tr>
+                                );
+                              });
+                            })()}
                           </tbody>
                         </table>
                       </div>

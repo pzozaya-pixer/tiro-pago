@@ -5,6 +5,7 @@ import { Dashboard } from './pages/Dashboard';
 import { History } from './pages/History';
 import { NewRound } from './pages/NewRound';
 import { NewTirada } from './pages/NewTirada';
+import { Share } from './pages/Share';
 import { Tiradas } from './pages/Tiradas';
 import { useTrainingStore } from './store/useTrainingStore';
 
@@ -93,7 +94,7 @@ export default function App() {
         <Route path="/nueva-tirada" element={<NewTirada />} />
         <Route path="/tiradas" element={<Tiradas />} />
         <Route path="/historial" element={<History />} />
-        <Route path="/armas" element={<Tiradas mode="weapons" />} />
+        <Route path="/compartir" element={<Share />} />
         <Route path="/ajustes" element={<Tiradas mode="settings" />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>

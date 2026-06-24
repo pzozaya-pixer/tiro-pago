@@ -15,8 +15,9 @@ export function scoreRound(shots: number[]) {
 }
 
 export function recalculateSession(session: Tirada, rounds: Round[]): Tirada {
-  const totalScore = rounds.reduce((sum, round) => sum + round.totalScore, 0);
-  const totalShots = rounds.reduce((sum, round) => sum + round.shots.length, 0);
+  const validRounds = rounds.filter((r) => !r.isPrueba);
+  const totalScore = validRounds.reduce((sum, round) => sum + round.totalScore, 0);
+  const totalShots = validRounds.reduce((sum, round) => sum + round.shots.length, 0);
 
   return {
     ...session,
