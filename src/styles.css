@@ -1221,3 +1221,121 @@ a {
   background: rgba(255, 255, 255, 0.02);
 }
 
+/* Custom Confirmation Modal Styles */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(3, 6, 9, 0.82);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  padding: 20px;
+  animation: modalFadeIn 0.2s ease-out;
+}
+
+.modal-card {
+  width: 100%;
+  max-width: 380px;
+  background: linear-gradient(145deg, rgba(32, 44, 55, 0.96), rgba(16, 24, 32, 0.98));
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: var(--radius-lg);
+  padding: 28px 24px;
+  text-align: center;
+  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.6);
+  animation: modalScaleIn 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.modal-card__icon {
+  width: 68px;
+  height: 68px;
+  background: rgba(255, 108, 114, 0.12);
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  margin: 0 auto 18px;
+  border: 1px solid rgba(255, 108, 114, 0.25);
+}
+
+.modal-card h3 {
+  font-size: 1.45rem;
+  font-weight: 900;
+  margin: 0 0 10px;
+  color: var(--text);
+}
+
+.modal-card p {
+  font-size: 0.92rem;
+  line-height: 1.5;
+  color: var(--muted);
+  margin: 0 0 24px;
+}
+
+.modal-card p strong {
+  color: var(--text);
+}
+
+.modal-card__actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.modal-btn {
+  min-height: 48px;
+  border: 0;
+  border-radius: 14px;
+  font-size: 0.96rem;
+  font-weight: 750;
+  cursor: pointer;
+  transition: background-color 0.15s ease, transform 0.1s ease;
+}
+
+.modal-btn:active {
+  transform: scale(0.97);
+}
+
+.modal-btn--secondary {
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--text);
+}
+
+.modal-btn--secondary:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.modal-btn--danger {
+  background: linear-gradient(135deg, var(--red), #d64b50);
+  color: white;
+  box-shadow: 0 10px 24px rgba(255, 108, 114, 0.2);
+}
+
+.modal-btn--danger:hover {
+  background: linear-gradient(135deg, #ff8085, var(--red));
+}
+
+@keyframes modalFadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes modalScaleIn {
+  from {
+    transform: scale(0.9);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
