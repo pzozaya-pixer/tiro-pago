@@ -24,14 +24,9 @@ export function NewTirada() {
 
   return (
     <form className="page form-page" onSubmit={handleSubmit}>
-      <header className="compact-header compact-header--row">
-        <div>
-          <h1>Nueva tirada</h1>
-          <p>Selecciona modalidad y tipo de entrenamiento.</p>
-        </div>
-        <div className="header-logo-container">
-          <img src={`${import.meta.env.BASE_URL}logo-pixer.png`} alt="Agencia Pixer" className="header-logo" />
-        </div>
+      <header className="compact-header">
+        <h1>Nueva tirada</h1>
+        <p>Selecciona modalidad y tipo de entrenamiento.</p>
       </header>
 
       <label className="field">
