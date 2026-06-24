@@ -1,6 +1,6 @@
 import { Link, useNavigate } from 'react-router-dom';
 import { ArrowLeft, CalendarDays, Check, Crosshair, Eraser, Save, Tag, Trophy } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { modalities } from '../data/modalities';
 import { formatAverage, scoreRound } from '../lib/scoring';
 import { findModality, useTrainingStore } from '../store/useTrainingStore';
@@ -23,6 +23,18 @@ export function NewRound() {
   const isComplete = shots.length === 5;
 
   const isCompetitionCompleted = activeTirada?.type === 'competicion' && competitionRounds.length >= 12;
+
+  const scorePanelRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    // Desplazar automáticamente al panel de puntuación para centrar la interfaz en móviles
+    const timer = setTimeout(() => {
+      if (scorePanelRef.current) {
+        scorePanelRef.current.scrollIntoView({ behavior: 'auto', block: 'start' });
+      }
+    }, 60);
+    return () => clearTimeout(timer);
+  }, [isCompetitionCompleted]);
 
   function addShot(score: number | 'M') {
     if (shots.length >= 5) return;
@@ -104,7 +116,7 @@ export function NewRound() {
         </section>
       ) : (
         <>
-          <section className="score-panel">
+          <section className="score-panel" ref={scorePanelRef}>
             <div className="round-title">
               <h2>
                 {isPrueba
