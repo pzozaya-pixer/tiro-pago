@@ -56,7 +56,7 @@ export default function App() {
           <div className="onboarding-logo">
             <div className="header-logo-container" style={{ marginBottom: '10px' }}>
               <img
-                src={`${import.meta.env.BASE_URL}icon-512.png`}
+                src={`${import.meta.env.BASE_URL}logo-pixer.png`}
                 alt="Agencia Pixer"
                 className="header-logo"
                 style={{ width: '80px', height: '80px', margin: '0 auto' }}

@@ -46,7 +46,7 @@ export function NewRound() {
         </Link>
         <h1>Nueva Tanda</h1>
         <div className="header-logo-container round-topbar__logo">
-          <img src={`${import.meta.env.BASE_URL}icon-512.png`} alt="Agencia Pixer" className="header-logo" />
+          <img src={`${import.meta.env.BASE_URL}logo-pixer.png`} alt="Agencia Pixer" className="header-logo" />
         </div>
       </header>
 

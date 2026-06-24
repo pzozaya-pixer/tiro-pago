@@ -16,7 +16,7 @@ export function Tiradas({ mode }: { mode?: 'weapons' | 'settings' }) {
             <p>Armas preparadas para tiradas de pistola y carabina .22 LR.</p>
           </div>
           <div className="header-logo-container">
-            <img src={`${import.meta.env.BASE_URL}icon-512.png`} alt="Agencia Pixer" className="header-logo" />
+            <img src={`${import.meta.env.BASE_URL}logo-pixer.png`} alt="Agencia Pixer" className="header-logo" />
           </div>
         </header>
         <div className="simple-list">
@@ -40,7 +40,7 @@ export function Tiradas({ mode }: { mode?: 'weapons' | 'settings' }) {
             <p>Proveedor configurado: {import.meta.env.VITE_DATA_PROVIDER ?? 'local'}.</p>
           </div>
           <div className="header-logo-container">
-            <img src={`${import.meta.env.BASE_URL}icon-512.png`} alt="Agencia Pixer" className="header-logo" />
+            <img src={`${import.meta.env.BASE_URL}logo-pixer.png`} alt="Agencia Pixer" className="header-logo" />
           </div>
         </header>
         <div className="status-card">
@@ -63,7 +63,7 @@ export function Tiradas({ mode }: { mode?: 'weapons' | 'settings' }) {
             <Plus />
           </Link>
           <div className="header-logo-container">
-            <img src={`${import.meta.env.BASE_URL}icon-512.png`} alt="Agencia Pixer" className="header-logo" />
+            <img src={`${import.meta.env.BASE_URL}logo-pixer.png`} alt="Agencia Pixer" className="header-logo" />
           </div>
         </div>
       </header>

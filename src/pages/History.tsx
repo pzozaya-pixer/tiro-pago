@@ -22,7 +22,7 @@ export function History() {
         </div>
         <div className="header-logo-container">
           <img
-            src={`${import.meta.env.BASE_URL}icon-512.png`}
+            src={`${import.meta.env.BASE_URL}logo-pixer.png`}
             alt="Agencia Pixer"
             className="header-logo"
           />
