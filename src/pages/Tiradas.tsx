@@ -10,9 +10,14 @@ export function Tiradas({ mode }: { mode?: 'weapons' | 'settings' }) {
   if (mode === 'weapons') {
     return (
       <div className="page list-page">
-        <header className="compact-header">
-          <h1>Armas</h1>
-          <p>Armas preparadas para tiradas de pistola y carabina .22 LR.</p>
+        <header className="compact-header compact-header--row">
+          <div>
+            <h1>Armas</h1>
+            <p>Armas preparadas para tiradas de pistola y carabina .22 LR.</p>
+          </div>
+          <div className="header-logo-container">
+            <img src={`${import.meta.env.BASE_URL}icon-512.png`} alt="Agencia Pixer" className="header-logo" />
+          </div>
         </header>
         <div className="simple-list">
           {weapons.map((weapon) => (
@@ -29,9 +34,14 @@ export function Tiradas({ mode }: { mode?: 'weapons' | 'settings' }) {
   if (mode === 'settings') {
     return (
       <div className="page list-page">
-        <header className="compact-header">
-          <h1>Ajustes</h1>
-          <p>Proveedor configurado: {import.meta.env.VITE_DATA_PROVIDER ?? 'local'}.</p>
+        <header className="compact-header compact-header--row">
+          <div>
+            <h1>Ajustes</h1>
+            <p>Proveedor configurado: {import.meta.env.VITE_DATA_PROVIDER ?? 'local'}.</p>
+          </div>
+          <div className="header-logo-container">
+            <img src={`${import.meta.env.BASE_URL}icon-512.png`} alt="Agencia Pixer" className="header-logo" />
+          </div>
         </header>
         <div className="status-card">
           <strong>Offline listo</strong>
@@ -48,9 +58,14 @@ export function Tiradas({ mode }: { mode?: 'weapons' | 'settings' }) {
           <h1>Tiradas</h1>
           <p>Resumen de tiradas y totales acumulados.</p>
         </div>
-        <Link className="round-add" to="/nueva-tirada" aria-label="Nueva tirada">
-          <Plus />
-        </Link>
+        <div className="header-actions">
+          <Link className="round-add" to="/nueva-tirada" aria-label="Nueva tirada">
+            <Plus />
+          </Link>
+          <div className="header-logo-container">
+            <img src={`${import.meta.env.BASE_URL}icon-512.png`} alt="Agencia Pixer" className="header-logo" />
+          </div>
+        </div>
       </header>
       <div className="session-list">
         {tiradas.map((tirada) => (

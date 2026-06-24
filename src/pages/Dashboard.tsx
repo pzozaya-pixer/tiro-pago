@@ -27,6 +27,9 @@ export function Dashboard() {
             <p>Tu progreso · <span style={{ color: 'var(--green)', fontWeight: 700 }}>{userPhone}</span></p>
           </div>
         </div>
+        <div className="header-logo-container">
+          <img src={`${import.meta.env.BASE_URL}icon-512.png`} alt="Agencia Pixer" className="header-logo" />
+        </div>
       </header>
 
       <section>

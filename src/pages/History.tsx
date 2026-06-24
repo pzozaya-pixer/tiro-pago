@@ -15,9 +15,18 @@ export function History() {
 
   return (
     <div className="page list-page">
-      <header className="compact-header">
-        <h1>Historial</h1>
-        <p>Evolución básica por modalidad y tandas registradas.</p>
+      <header className="compact-header compact-header--row">
+        <div>
+          <h1>Historial</h1>
+          <p>Evolución básica por modalidad y tandas registradas.</p>
+        </div>
+        <div className="header-logo-container">
+          <img
+            src={`${import.meta.env.BASE_URL}icon-512.png`}
+            alt="Agencia Pixer"
+            className="header-logo"
+          />
+        </div>
       </header>
 
       <div className="history-grid">
@@ -44,7 +53,9 @@ export function History() {
         <div className="simple-list">
           {tiradas.map((tirada) => {
             const isExpanded = expandedSessionId === tirada.id;
-            const sessionRounds = rounds.filter((r) => r.sessionId === tirada.id);
+            const sessionRounds = rounds
+              .filter((r) => r.sessionId === tirada.id)
+              .sort((a, b) => a.roundNumber - b.roundNumber);
             const modality = findModality(tirada.modalityId);
 
             return (
@@ -70,17 +81,37 @@ export function History() {
                     {sessionRounds.length === 0 ? (
                       <p className="no-rounds-text">No hay tandas registradas en esta tirada.</p>
                     ) : (
-                      sessionRounds.map((round) => (
-                        <div key={round.id} className="session-detail-round-row">
-                          <div className="round-meta">
-                            <span className="round-name">Tanda {round.roundNumber}</span>
-                            <span className="round-shots">
-                              ({round.shots.map((s) => (s === 0 ? 'M' : s)).join(', ')})
-                            </span>
-                          </div>
-                          <span className="round-total">{round.totalScore} pts</span>
-                        </div>
-                      ))
+                      <div className="table-responsive">
+                        <table className="rounds-table">
+                          <thead>
+                            <tr>
+                              <th>Tanda</th>
+                              <th className="text-center">D1</th>
+                              <th className="text-center">D2</th>
+                              <th className="text-center">D3</th>
+                              <th className="text-center">D4</th>
+                              <th className="text-center">D5</th>
+                              <th className="text-right">Total</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {sessionRounds.map((round) => (
+                              <tr key={round.id}>
+                                <td className="round-num-col">Tanda {round.roundNumber}</td>
+                                {Array.from({ length: 5 }).map((_, shotIdx) => {
+                                  const shot = round.shots[shotIdx];
+                                  return (
+                                    <td key={shotIdx} className="shot-val-col">
+                                      {shot === undefined ? '-' : shot === 0 ? 'M' : shot}
+                                    </td>
+                                  );
+                                })}
+                                <td className="round-total-col text-right">{round.totalScore} pts</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
                     )}
                   </div>
                 )}

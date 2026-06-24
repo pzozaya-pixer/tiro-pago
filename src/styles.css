@@ -1113,3 +1113,111 @@ a {
   font-size: 0.95rem;
 }
 
+/* Agencia Pixer Logo & Header Actions Styles */
+.header-logo-container {
+  flex-shrink: 0;
+}
+
+.header-logo {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  object-fit: cover;
+  background: white;
+  border: 2px solid var(--border);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  display: block;
+  transition: width 0.2s, height 0.2s;
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+}
+
+.round-topbar__logo .header-logo {
+  width: 38px;
+  height: 38px;
+}
+
+@media (max-width: 400px) {
+  .header-logo {
+    width: 38px;
+    height: 38px;
+  }
+}
+
+/* Professional Score Table for Rounds */
+.table-responsive {
+  width: 100%;
+  overflow-x: auto;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+  background: var(--surface-soft);
+  margin-top: 8px;
+}
+
+.rounds-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.92rem;
+  text-align: left;
+}
+
+.rounds-table th,
+.rounds-table td {
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--border);
+}
+
+.rounds-table tr:last-child td {
+  border-bottom: none;
+}
+
+.rounds-table th {
+  font-weight: 700;
+  color: var(--muted);
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  background: rgba(255, 255, 255, 0.015);
+}
+
+.rounds-table td {
+  color: var(--text);
+}
+
+.rounds-table .text-center {
+  text-align: center;
+}
+
+.rounds-table .text-right {
+  text-align: right;
+}
+
+.rounds-table .round-num-col {
+  font-weight: 800;
+  color: var(--text);
+  min-width: 80px;
+}
+
+.rounds-table .shot-val-col {
+  text-align: center;
+  font-family: monospace;
+  font-size: 0.95rem;
+  width: 45px;
+  font-weight: 600;
+}
+
+.rounds-table .round-total-col {
+  font-weight: 850;
+  color: var(--green);
+  min-width: 75px;
+}
+
+.rounds-table tbody tr:hover {
+  background: rgba(255, 255, 255, 0.02);
+}
+
