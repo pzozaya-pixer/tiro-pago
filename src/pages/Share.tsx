@@ -4,18 +4,50 @@ import { formatAverage, formatDate } from '../lib/scoring';
 import { Calendar, ChevronRight, FileText, Loader2, Share2, Target, Trophy } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
-// Load jsPDF dynamically from CDN to bypass local build and installation issues
+// Load jsPDF dynamically from CDN with polling fallback to prevent duplicate scripts and race conditions
 function loadJsPDF(): Promise<any> {
   return new Promise((resolve, reject) => {
-    if ((window as any).jspdf) {
-      resolve((window as any).jspdf);
+    // 1. If it's already fully loaded, resolve immediately
+    const jsPDFClass = (window as any).jspdf?.jsPDF || (window as any).jsPDF;
+    if (jsPDFClass) {
+      resolve({ jsPDF: jsPDFClass });
       return;
     }
+
+    // 2. Check if a script is already in the process of loading
+    const existingScript = document.querySelector('script[src*="jspdf"]');
+    if (existingScript) {
+      // Poll until the global object is populated
+      const interval = setInterval(() => {
+        const jsPDFClassActive = (window as any).jspdf?.jsPDF || (window as any).jsPDF;
+        if (jsPDFClassActive) {
+          clearInterval(interval);
+          resolve({ jsPDF: jsPDFClassActive });
+        }
+      }, 50);
+
+      // Timeout after 10 seconds to prevent permanent hang
+      setTimeout(() => {
+        clearInterval(interval);
+        reject(new Error('Timeout waiting for pre-loaded jsPDF script to initialize'));
+      }, 10000);
+      return;
+    }
+
+    // 3. If no script is present, create and append it
     const script = document.createElement('script');
     script.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
     script.async = true;
     script.onload = () => {
-      resolve((window as any).jspdf);
+      // Small timeout to ensure the browser has fully parsed the UMD bundle exports
+      setTimeout(() => {
+        const jsPDFClassActive = (window as any).jspdf?.jsPDF || (window as any).jsPDF;
+        if (jsPDFClassActive) {
+          resolve({ jsPDF: jsPDFClassActive });
+        } else {
+          reject(new Error('jsPDF loaded but constructor not found on window'));
+        }
+      }, 20);
     };
     script.onerror = (err) => {
       reject(err);
