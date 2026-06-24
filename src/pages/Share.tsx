@@ -95,31 +95,28 @@ export function Share() {
     const colorText = [55, 65, 81]; // #374151 (gray-700)
     const colorTextMuted = [107, 114, 128]; // #6b7280 (gray-500)
 
-    // Header Background
-    doc.setFillColor(colorPrimary[0], colorPrimary[1], colorPrimary[2]);
-    doc.rect(0, 0, 210, 40, 'F');
+    // Draw an elegant white header box with a black outline
+    doc.setDrawColor(colorPrimary[0], colorPrimary[1], colorPrimary[2]);
+    doc.setLineWidth(0.4);
+    doc.rect(15, 12, 180, 26, 'S'); // 'S' draws the outline border
 
-    // Decorative blue accent line
-    doc.setFillColor(colorAccent[0], colorAccent[1], colorAccent[2]);
-    doc.rect(0, 40, 210, 2, 'F');
-
-    // Header Text
-    doc.setTextColor(255, 255, 255);
+    // Header Text in Black
+    doc.setTextColor(colorPrimary[0], colorPrimary[1], colorPrimary[2]);
     doc.setFont('helvetica', 'bold');
-    doc.setFontSize(24);
-    doc.text('Tiro22', 15, 18);
+    doc.setFontSize(20);
+    doc.text('Tiro22', 20, 20);
 
-    doc.setFontSize(10);
+    doc.setFontSize(9.5);
     doc.setFont('helvetica', 'normal');
-    doc.text('REPORTE OFICIAL DE TIRADA', 15, 24);
-    doc.text('Desarrollado por Agencia Pixer', 15, 29);
+    doc.text('REPORTE OFICIAL DE TIRADA', 20, 26);
+    doc.text('Desarrollado por Agencia Pixer', 20, 31);
 
-    // Top-right header metadata
+    // Top-right header metadata inside the box
     const formattedDate = formatDate(tirada.date);
-    doc.setFontSize(10);
-    doc.text(`Fecha: ${formattedDate}`, 195, 18, { align: 'right' });
+    doc.setFontSize(9.5);
+    doc.text(`Fecha: ${formattedDate}`, 190, 20, { align: 'right' });
     if (userPhone) {
-      doc.text(`Tlf: ${userPhone}`, 195, 24, { align: 'right' });
+      doc.text(`Tlf: ${userPhone}`, 190, 26, { align: 'right' });
     }
 
     // Session Info Card
