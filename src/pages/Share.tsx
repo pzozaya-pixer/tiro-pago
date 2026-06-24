@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { findModality, useTrainingStore } from '../store/useTrainingStore';
 import { formatAverage, formatDate } from '../lib/scoring';
 import { Calendar, ChevronRight, FileText, Loader2, Share2, Target, Trophy } from 'lucide-react';
@@ -30,6 +30,11 @@ export function Share() {
   const weapons = useTrainingStore((state) => state.weapons);
   const userPhone = useTrainingStore((state) => state.userPhone);
   const [sharingId, setSharingId] = useState<string | null>(null);
+
+  // Pre-load jsPDF on component mount to keep the user interaction gesture fresh for native sharing
+  useEffect(() => {
+    loadJsPDF().catch((err) => console.error('Error pre-loading jsPDF:', err));
+  }, []);
 
   // Generate a premium typographic PDF document
   const generatePDF = async (tiradaId: string) => {
@@ -252,25 +257,39 @@ export function Share() {
 ----------------------------------
 Generado por Tiro22 · Agencia Pixer`;
 
+      const runFallback = () => {
+        doc.save(filename);
+        const whatsappUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(textSummary)}`;
+        window.open(whatsappUrl, '_blank');
+      };
+
       // Check if native sharing is supported on this device/browser
       if (
         navigator.share &&
         navigator.canShare &&
         navigator.canShare({ files: [pdfFile] })
       ) {
-        await navigator.share({
-          files: [pdfFile],
-          title: `Reporte de Tirada - ${modality.name}`,
-          text: textSummary
-        });
+        try {
+          await navigator.share({
+            files: [pdfFile],
+            title: `Reporte de Tirada - ${modality.name}`,
+            text: textSummary
+          });
+        } catch (shareErr) {
+          console.warn('Native share failed or cancelled, executing fallback:', shareErr);
+          // Only skip fallback if the user intentionally cancelled/aborted the native share sheet
+          if (shareErr instanceof Error && shareErr.name === 'AbortError') {
+            console.log('Native share aborted by the user.');
+          } else {
+            runFallback();
+          }
+        }
       } else {
-        // Fallback for desktop: Download PDF file and open WhatsApp Web with the summary text
-        doc.save(filename);
-        const whatsappUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(textSummary)}`;
-        window.open(whatsappUrl, '_blank');
+        runFallback();
       }
     } catch (err) {
       console.error('Error sharing tirada:', err);
+      alert('No se pudo generar o compartir el reporte. Por favor, inténtelo de nuevo.');
     } finally {
       setSharingId(null);
     }
