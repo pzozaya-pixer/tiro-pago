@@ -1,5 +1,4 @@
 import { Link, useNavigate } from 'react-router-dom';
-import { Link, useNavigate } from 'react-router-dom';
 import { ArrowLeft, CalendarDays, Check, Crosshair, Eraser, Save, Tag, Trophy } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { modalities } from '../data/modalities';
