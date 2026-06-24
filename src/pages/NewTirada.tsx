@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom';
-import { Calendar, Save } from 'lucide-react';
+import { Calendar, Save, Crosshair, Target, Gauge } from 'lucide-react';
 import { modalities } from '../data/modalities';
 import { useTrainingStore } from '../store/useTrainingStore';
 import type { TiradaType } from '../types';
@@ -34,16 +34,36 @@ export function NewTirada() {
         </div>
       </header>
 
-      <label className="field">
-        <span>Modalidad</span>
-        <select value={modalityId} onChange={(event) => setModalityId(event.target.value)}>
-          {modalities.map((modality) => (
-            <option key={modality.id} value={modality.id}>
-              {modality.name}
-            </option>
-          ))}
-        </select>
-      </label>
+      <div className="modality-selector-container">
+        <span className="field-label">Modalidad</span>
+        <div className="modality-list">
+          {modalities.map((modality) => {
+            const isSelected = modalityId === modality.id;
+            const Icon = modality.id.includes('rapid')
+              ? Gauge
+              : modality.weaponType === 'rifle'
+              ? Target
+              : Crosshair;
+
+            return (
+              <button
+                key={modality.id}
+                type="button"
+                className={`modality-select-card ${isSelected ? 'is-selected' : ''}`}
+                onClick={() => setModalityId(modality.id)}
+              >
+                <div className="modality-select-card__main">
+                  <Icon size={22} className="modality-select-card__icon" />
+                  <span className="modality-select-card__name">{modality.name}</span>
+                </div>
+                <div className="modality-select-card__meta">
+                  <span className="badge">{modality.distance}</span>
+                </div>
+              </button>
+            );
+          })}
+        </div>
+      </div>
 
       <div className="segmented">
         {(['entrenamiento', 'competicion'] as TiradaType[]).map((item) => (

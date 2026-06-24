@@ -1602,3 +1602,125 @@ a {
   }
 }
 
+/* Custom Modality Selector Cards for NewTirada */
+.modality-selector-container {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+
+.field-label {
+  font-size: 0.92rem;
+  font-weight: 750;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.modality-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-height: 280px; /* Limit height and make it scrollable if there are many */
+  overflow-y: auto;
+  padding-right: 4px;
+  /* Premium scrollbar styles */
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.1) transparent;
+}
+
+.modality-list::-webkit-scrollbar {
+  width: 5px;
+}
+
+.modality-list::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.12);
+  border-radius: 10px;
+}
+
+.modality-select-card {
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.03), rgba(255, 255, 255, 0.01));
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: var(--radius-md);
+  padding: 14px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  text-align: left;
+  cursor: pointer;
+  width: 100%;
+  transition: border-color 0.2s ease, background-color 0.2s ease, box-shadow 0.2s ease, transform 0.15s ease;
+}
+
+.modality-select-card:hover:not(.is-selected) {
+  border-color: rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.modality-select-card:active {
+  transform: scale(0.99);
+}
+
+.modality-select-card.is-selected {
+  border-color: var(--green) !important;
+  background: rgba(72, 177, 56, 0.08) !important;
+  box-shadow: 0 0 16px rgba(72, 177, 56, 0.15);
+}
+
+.modality-select-card__main {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.modality-select-card__icon {
+  color: var(--muted);
+  flex-shrink: 0;
+  transition: color 0.2s ease;
+}
+
+.modality-select-card.is-selected .modality-select-card__icon {
+  color: var(--green);
+}
+
+.modality-select-card__name {
+  font-size: 0.98rem;
+  font-weight: 750;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  transition: color 0.2s ease;
+}
+
+.modality-select-card.is-selected .modality-select-card__name {
+  color: var(--text);
+}
+
+.modality-select-card__meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: 12px;
+  flex-shrink: 0;
+}
+
+.modality-select-card__meta .badge {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  color: var(--muted);
+  padding: 4px 8px;
+  font-size: 0.76rem;
+  font-weight: 800;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+}
+
+.modality-select-card.is-selected .badge {
+  background: rgba(72, 177, 56, 0.2);
+  border-color: rgba(72, 177, 56, 0.3);
+  color: #c4f2be;
+}
+
