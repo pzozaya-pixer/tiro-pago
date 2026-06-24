@@ -137,14 +137,12 @@ export function Share() {
     doc.setTextColor(colorText[0], colorText[1], colorText[2]);
 
     // Left Column Info
-    doc.text(`Modalidad: ${modality.name.replace(' .22 LR', '')}`, 20, 62);
-    doc.text(`Calibre: ${modality.caliber} · Distancia: ${modality.distance}`, 20, 67);
-    doc.text(`Arma: ${weapon ? weapon.name : 'No especificada'}`, 20, 72);
+    doc.text(`Modalidad: ${modality.name}`, 20, 62);
+    doc.text(`Calibre: ${modality.caliber} · Distancia: ${modality.distance}`, 20, 70);
 
     // Right Column Info
     doc.text(`Tipo: ${tirada.type === 'competicion' ? 'Competición' : 'Entrenamiento'}`, 110, 62);
-    doc.text(`Resultado: ${tirada.totalScore} pts / ${tirada.totalShots} disparos`, 110, 67);
-    doc.text(`Media: ${formatAverage(tirada.averageScore)}`, 110, 72);
+    doc.text(`Resultado: ${tirada.totalScore} pts (${tirada.totalShots} disparos · Media ${formatAverage(tirada.averageScore)})`, 110, 70);
 
     // Section Header: Tandas Detail
     doc.setTextColor(colorPrimary[0], colorPrimary[1], colorPrimary[2]);
