@@ -45,7 +45,9 @@ export function NewRound() {
           <ArrowLeft size={30} />
         </Link>
         <h1>Nueva Tanda</h1>
-        <span />
+        <div className="header-logo-container round-topbar__logo">
+          <img src={`${import.meta.env.BASE_URL}logo-pixer.png`} alt="Agencia Pixer" className="header-logo" />
+        </div>
       </header>
 
       <section className="round-context">

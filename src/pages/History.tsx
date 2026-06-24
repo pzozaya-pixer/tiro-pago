@@ -15,9 +15,18 @@ export function History() {
 
   return (
     <div className="page list-page">
-      <header className="compact-header">
-        <h1>Historial</h1>
-        <p>Evolución básica por modalidad y tandas registradas.</p>
+      <header className="compact-header compact-header--row">
+        <div>
+          <h1>Historial</h1>
+          <p>Evolución básica por modalidad y tandas registradas.</p>
+        </div>
+        <div className="header-logo-container">
+          <img
+            src={`${import.meta.env.BASE_URL}logo-pixer.png`}
+            alt="Agencia Pixer"
+            className="header-logo"
+          />
+        </div>
       </header>
 
       <div className="history-grid">
