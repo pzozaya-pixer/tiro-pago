@@ -12,46 +12,12 @@ export function History() {
 
   const [expandedSessionId, setExpandedSessionId] = useState<string | null>(null);
 
-  const officialRounds = rounds.filter((r) => !r.isPrueba);
-  const bestRound = officialRounds.reduce((best, round) => (round.totalScore > (best?.totalScore ?? -1) ? round : best), officialRounds[0]);
-  const worstRound = officialRounds.reduce((worst, round) => (round.totalScore < (worst?.totalScore ?? 99) ? round : worst), officialRounds[0]);
-  const totalShots = tiradas.reduce((sum, tirada) => sum + tirada.totalShots, 0);
-  const totalScore = tiradas.reduce((sum, tirada) => sum + tirada.totalScore, 0);
-
   return (
     <div className="page list-page">
-      <header className="compact-header compact-header--row">
-        <div>
-          <h1>{t.history_title}</h1>
-          <p>{t.history_subtitle}</p>
-        </div>
-        <div className="header-logo-container">
-          <img
-            src={`${import.meta.env.BASE_URL}logo-pixer.png`}
-            alt="Agencia Pixer"
-            className="header-logo"
-          />
-        </div>
+      <header className="compact-header">
+        <h1>{t.history_title}</h1>
+        <p>{t.history_subtitle}</p>
       </header>
-
-      <div className="history-grid">
-        <article>
-          <span>{t.history_stat_shots}</span>
-          <strong>{totalShots}</strong>
-        </article>
-        <article>
-          <span>{t.history_stat_average}</span>
-          <strong>{formatAverage(totalShots ? totalScore / totalShots : 0)}</strong>
-        </article>
-        <article>
-          <span>{t.history_stat_best}</span>
-          <strong>{bestRound ? `${bestRound.totalScore}/50` : '-'}</strong>
-        </article>
-        <article>
-          <span>{t.history_stat_worst}</span>
-          <strong>{worstRound ? `${worstRound.totalScore}/50` : '-'}</strong>
-        </article>
-      </div>
 
       <section>
         <h2>{t.history_section_title}</h2>
