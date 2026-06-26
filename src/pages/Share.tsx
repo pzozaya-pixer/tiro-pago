@@ -1,88 +1,30 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { findModality, useTrainingStore } from '../store/useTrainingStore';
 import { formatAverage, formatDate } from '../lib/scoring';
 import { FileText, Loader2, Share2, Target } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { translations } from '../data/translations';
-
-// Load jsPDF dynamically from CDN with polling fallback to prevent duplicate scripts and race conditions
-function loadJsPDF(): Promise<any> {
-  return new Promise((resolve, reject) => {
-    // 1. If it's already fully loaded, resolve immediately
-    const jsPDFClass = (window as any).jspdf?.jsPDF || (window as any).jsPDF;
-    if (jsPDFClass) {
-      resolve({ jsPDF: jsPDFClass });
-      return;
-    }
-
-    // 2. Check if a script is already in the process of loading
-    const existingScript = document.querySelector('script[src*="jspdf"]');
-    if (existingScript) {
-      // Poll until the global object is populated
-      const interval = setInterval(() => {
-        const jsPDFClassActive = (window as any).jspdf?.jsPDF || (window as any).jsPDF;
-        if (jsPDFClassActive) {
-          clearInterval(interval);
-          resolve({ jsPDF: jsPDFClassActive });
-        }
-      }, 50);
-
-      // Timeout after 10 seconds to prevent permanent hang
-      setTimeout(() => {
-        clearInterval(interval);
-        reject(new Error('Timeout waiting for pre-loaded jsPDF script to initialize'));
-      }, 10000);
-      return;
-    }
-
-    // 3. If no script is present, create and append it
-    const script = document.createElement('script');
-    script.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
-    script.async = true;
-    script.onload = () => {
-      // Small timeout to ensure the browser has fully parsed the UMD bundle exports
-      setTimeout(() => {
-        const jsPDFClassActive = (window as any).jspdf?.jsPDF || (window as any).jsPDF;
-        if (jsPDFClassActive) {
-          resolve({ jsPDF: jsPDFClassActive });
-        } else {
-          reject(new Error('jsPDF loaded but constructor not found on window'));
-        }
-      }, 20);
-    };
-    script.onerror = (err) => {
-      reject(err);
-    };
-    document.body.appendChild(script);
-  });
-}
+import { jsPDF } from 'jspdf';
+import * as XLSX from 'xlsx';
 
 export function Share() {
   const tiradas = useTrainingStore((state) => state.tiradas);
   const rounds = useTrainingStore((state) => state.rounds);
-  const userEmail = useTrainingStore((state) => state.userEmail);
+  const userPhone = useTrainingStore((state) => state.userEmail);
   const language = useTrainingStore((state) => state.language);
   const t = translations[language];
 
   const [sharingId, setSharingId] = useState<string | null>(null);
   const [exportingId, setExportingId] = useState<string | null>(null);
 
-  // Pre-load jsPDF on component mount to keep the user interaction gesture fresh for native sharing
-  useEffect(() => {
-    loadJsPDF().catch((err) => console.error('Error pre-loading jsPDF:', err));
-  }, []);
-
   // Generate a premium typographic PDF document in the selected language
-  const generatePDF = async (tiradaId: string) => {
+  const generatePDF = (tiradaId: string) => {
     const tirada = tiradas.find((t) => t.id === tiradaId);
     if (!tirada) return null;
     const sessionRounds = rounds
       .filter((r) => r.sessionId === tiradaId)
       .sort((a, b) => a.roundNumber - b.roundNumber);
     const modality = findModality(tirada.modalityId);
-
-    const jspdfModule = await loadJsPDF();
-    const { jsPDF } = jspdfModule;
 
     const doc = new jsPDF({
       orientation: 'portrait',
@@ -118,8 +60,8 @@ export function Share() {
     const formattedDate = formatDate(tirada.date);
     doc.setFontSize(9.5);
     doc.text(`${t.share_excel_meta_date}: ${formattedDate}`, 190, 20, { align: 'right' });
-    if (userEmail) {
-      doc.text(`${t.share_excel_meta_phone}: ${userEmail}`, 190, 26, { align: 'right' });
+    if (userPhone) {
+      doc.text(`${t.share_excel_meta_phone}: ${userPhone}`, 190, 26, { align: 'right' });
     }
 
     // Session Info Card
@@ -270,7 +212,7 @@ export function Share() {
       if (!tirada) return;
       const modality = findModality(tirada.modalityId);
 
-      const doc = await generatePDF(tiradaId);
+      const doc = generatePDF(tiradaId);
       if (!doc) return;
 
       const pdfBlob = doc.output('blob');
@@ -285,6 +227,7 @@ export function Share() {
 ----------------------------------
 🎯 *${t.share_pdf_info_modality}:* ${modality.name.replace(' .22 LR', '')}
 📅 *${t.share_excel_meta_date}:* ${formattedDate}
+      *${t.share_excel_meta_phone}:* ${userPhone || '-'}
 📝 *${t.share_pdf_info_type}:* ${typeLabel}
 📊 *${t.share_pdf_info_result}:* ${tirada.totalScore} pts (${tirada.totalShots} ${t.share_stats_shots})
 📈 *${t.share_pdf_info_average}:* ${formatAverage(tirada.averageScore)}
@@ -343,23 +286,24 @@ Generado por Tiro22 · Agencia Pixer`;
       const formattedDate = formatDate(tirada.date);
       const sessionTypeLabel = tirada.type === 'competicion' ? t.new_tirada_type_competition : t.new_tirada_type_training;
 
-      // Build Excel-compatible CSV rows
-      const csvRows: string[] = [];
+      // Build SheetJS Array of Arrays (AOA)
+      const data: any[][] = [
+        [t.share_excel_meta_title],
+        [],
+        [t.share_pdf_info_modality, modality.name],
+        [t.share_pdf_info_caliber, modality.caliber],
+        [t.share_pdf_info_distance, modality.distance],
+        [t.share_pdf_info_type, sessionTypeLabel],
+        [t.share_excel_meta_date, formattedDate],
+      ];
 
-      // Metadata section at the top of the file
-      csvRows.push(`${t.share_excel_meta_title}`);
-      csvRows.push('');
-      csvRows.push(`${t.share_pdf_info_modality};${modality.name}`);
-      csvRows.push(`${t.share_pdf_info_caliber};${modality.caliber}`);
-      csvRows.push(`${t.share_pdf_info_distance};${modality.distance}`);
-      csvRows.push(`${t.share_pdf_info_type};${sessionTypeLabel}`);
-      csvRows.push(`${t.share_excel_meta_date};${formattedDate}`);
-      if (userEmail) {
-        csvRows.push(`${t.share_excel_meta_phone};${userEmail}`);
+      if (userPhone) {
+        data.push([t.share_excel_meta_phone, userPhone]);
       }
-      csvRows.push(`${t.share_pdf_info_result};${tirada.totalScore} pts (${tirada.totalShots} ${t.share_stats_shots})`);
-      csvRows.push(`${t.share_pdf_info_average};${formatAverage(tirada.averageScore)}`);
-      csvRows.push('');
+
+      data.push([t.share_pdf_info_result, `${tirada.totalScore} pts (${tirada.totalShots} ${t.share_stats_shots})`]);
+      data.push([t.share_pdf_info_average, formatAverage(tirada.averageScore)]);
+      data.push([]);
 
       // Detail Table Column Headers
       const headers = [
@@ -374,7 +318,7 @@ Generado por Tiro22 · Agencia Pixer`;
         t.share_excel_best_shot,
         t.share_excel_worst_shot
       ];
-      csvRows.push(headers.join(';'));
+      data.push(headers);
 
       // Detail Table Rows
       let competitionCount = 0;
@@ -387,48 +331,58 @@ Generado por Tiro22 · Agencia Pixer`;
           label = `${t.new_round_title_tanda} ${competitionCount}`;
         }
 
-        const shot1 = round.shots[0] === undefined ? '-' : round.shots[0] === 0 ? 'M' : String(round.shots[0]);
-        const shot2 = round.shots[1] === undefined ? '-' : round.shots[1] === 0 ? 'M' : String(round.shots[1]);
-        const shot3 = round.shots[2] === undefined ? '-' : round.shots[2] === 0 ? 'M' : String(round.shots[2]);
-        const shot4 = round.shots[3] === undefined ? '-' : round.shots[3] === 0 ? 'M' : String(round.shots[3]);
-        const shot5 = round.shots[4] === undefined ? '-' : round.shots[4] === 0 ? 'M' : String(round.shots[4]);
+        const shot1 = round.shots[0] === undefined ? '-' : round.shots[0] === 0 ? 'M' : round.shots[0];
+        const shot2 = round.shots[1] === undefined ? '-' : round.shots[1] === 0 ? 'M' : round.shots[1];
+        const shot3 = round.shots[2] === undefined ? '-' : round.shots[2] === 0 ? 'M' : round.shots[2];
+        const shot4 = round.shots[3] === undefined ? '-' : round.shots[3] === 0 ? 'M' : round.shots[3];
+        const shot5 = round.shots[4] === undefined ? '-' : round.shots[4] === 0 ? 'M' : round.shots[4];
 
-        const totalStr = `${round.totalScore} pts`;
-        const avgStr = formatAverage(round.averageScore);
-        const bestStr = round.bestShot === undefined ? '-' : round.bestShot === 0 ? 'M' : String(round.bestShot);
-        const worstStr = round.worstShot === undefined ? '-' : round.worstShot === 0 ? 'M' : String(round.worstShot);
+        const totalVal = round.totalScore;
+        const avgVal = round.averageScore;
+        const bestVal = round.bestShot === undefined ? '-' : round.bestShot === 0 ? 'M' : round.bestShot;
+        const worstVal = round.worstShot === undefined ? '-' : round.worstShot === 0 ? 'M' : round.worstShot;
 
-        const row = [
+        data.push([
           label,
           shot1,
           shot2,
           shot3,
           shot4,
           shot5,
-          totalStr,
-          avgStr,
-          bestStr,
-          worstStr
-        ];
-        csvRows.push(row.join(';'));
+          totalVal,
+          avgVal,
+          bestVal,
+          worstVal
+        ]);
       });
 
-      // Join lines using Windows carriage returns for best Excel compatibility
-      const csvContent = csvRows.join('\r\n');
+      // Create workbook and worksheet
+      const ws = XLSX.utils.aoa_to_sheet(data);
 
-      // Use a UTF-8 BOM so Excel opens special characters (accents, French glyphs) correctly automatically
-      const BOM = '\uFEFF';
-      const blob = new Blob([BOM + csvContent], { type: 'text/csv;charset=utf-8;' });
-      
-      const link = document.createElement('a');
+      // Adjust column widths for professional presentation
+      const wscols = [
+        { wch: 18 }, // Tanda / Prueba
+        { wch: 6 },  // D1
+        { wch: 6 },  // D2
+        { wch: 6 },  // D3
+        { wch: 6 },  // D4
+        { wch: 6 },  // D5
+        { wch: 10 }, // Total
+        { wch: 10 }, // Media
+        { wch: 10 }, // Mejor
+        { wch: 10 }  // Peor
+      ];
+      ws['!cols'] = wscols;
+
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, 'Tirada');
+
       const filenameDate = formattedDate.replace(/\//g, '-');
       const cleanModalityName = modality.name.replace(/\s+/g, '_');
-      
-      link.href = URL.createObjectURL(blob);
-      link.setAttribute('download', `Tirada_${cleanModalityName}_${filenameDate}.csv`);
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
+      const excelFilename = `Tirada_${cleanModalityName}_${filenameDate}.xlsx`;
+
+      // Write and download actual binary .xlsx file
+      XLSX.writeFile(wb, excelFilename);
     } catch (err) {
       console.error('Error exporting to Excel:', err);
       alert('No se pudo exportar el reporte a Excel. Por favor, inténtelo de nuevo.');
