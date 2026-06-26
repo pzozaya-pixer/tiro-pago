@@ -239,14 +239,26 @@ app.delete('/sessions/:id', async (request, response) => {
 
 app.post('/register', async (request, response) => {
   try {
-    const { phone } = z.object({ phone: z.string() }).parse(request.body);
+    const body = z.object({
+      phone: z.string().optional(),
+      email: z.string().optional()
+    }).parse(request.body);
+
+    const identifier = body.email ?? body.phone;
+    if (!identifier) {
+      return response.status(400).json({ error: 'Phone or email is required' });
+    }
+
+    const emailVal = body.email ?? `${body.phone}@tiro22.local`;
+    const nameVal = body.email ? `Tirador ${body.email.split('@')[0]}` : `Tirador ${body.phone}`;
+
     const user = await prisma.user.upsert({
-      where: { id: phone },
+      where: { id: identifier },
       update: {},
       create: {
-        id: phone,
-        email: `${phone}@tiro22.local`,
-        name: `Tirador ${phone}`
+        id: identifier,
+        email: emailVal,
+        name: nameVal
       }
     });
     response.status(200).json(user);

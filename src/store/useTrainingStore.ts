@@ -8,14 +8,14 @@ import type { Round, TiradaType, Tirada, Weapon, Modality } from '../types';
 import type { Language } from '../data/translations';
 
 type TrainingState = {
-  userPhone: string | null;
+  userEmail: string | null;
   tiradas: Tirada[];
   rounds: Round[];
   weapons: Weapon[];
   modalities: Modality[];
   language: Language;
   activeTiradaId?: string;
-  registerUser: (phone: string) => Promise<void>;
+  registerUser: (email: string) => Promise<void>;
   createTirada: (input: {
     modalityId: string;
     weaponId?: string;
@@ -79,7 +79,7 @@ const seedTiradas: Tirada[] = [
 export const useTrainingStore = create<TrainingState>()(
   persist(
     (set, get) => ({
-      userPhone: null,
+      userEmail: null,
       tiradas: seedTiradas,
       rounds: [],
       weapons: [
@@ -127,9 +127,9 @@ export const useTrainingStore = create<TrainingState>()(
         }));
       },
       activeTiradaId: 'seed-session-1',
-      registerUser: async (phone) => {
-        set({ userPhone: phone });
-
+      registerUser: async (email) => {
+        set({ userEmail: email });
+  
         // Registrar en el backend si el proveedor es api
         const provider = import.meta.env.VITE_DATA_PROVIDER ?? 'local';
         if (provider === 'api') {
@@ -138,7 +138,7 @@ export const useTrainingStore = create<TrainingState>()(
             await fetch(`${apiUrl}/register`, {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ phone })
+              body: JSON.stringify({ email })
             });
           } catch (error) {
             console.error('Error registering user on backend:', error);
@@ -146,7 +146,7 @@ export const useTrainingStore = create<TrainingState>()(
         }
       },
       createTirada: (input) => {
-        const userId = get().userPhone ?? 'demo-user';
+        const userId = get().userEmail ?? 'demo-user';
         const tirada: Tirada = {
           id: createId('session'), // Mantenemos el prefijo de ID 'session' para compatibilidad
           userId,
@@ -283,7 +283,17 @@ export const useTrainingStore = create<TrainingState>()(
     }),
     {
       name: 'tiro22-training-store',
-      version: 1
+      version: 2,
+      migrate: (persistedState: any, version: number) => {
+        if (version === 1) {
+          return {
+            ...persistedState,
+            userEmail: persistedState.userPhone || null,
+            version: 2
+          };
+        }
+        return persistedState;
+      }
     }
   )
 );

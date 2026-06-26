@@ -9,7 +9,7 @@ import { translations } from '../data/translations';
 
 export function Dashboard() {
   const tiradas = useTrainingStore((state) => state.tiradas);
-  const userPhone = useTrainingStore((state) => state.userPhone);
+  const userEmail = useTrainingStore((state) => state.userEmail);
   const language = useTrainingStore((state) => state.language);
   const t = translations[language];
 
@@ -28,7 +28,7 @@ export function Dashboard() {
             <h1>
               TIRO<span>22</span>
             </h1>
-            <p>{t.dashboard_welcome_subtitle} · <span style={{ color: 'var(--green)', fontWeight: 700 }}>{userPhone}</span></p>
+            <p>{t.dashboard_welcome_subtitle} · <span style={{ color: 'var(--green)', fontWeight: 700 }}>{userEmail}</span></p>
           </div>
         </div>
         <div className="header-logo-container">

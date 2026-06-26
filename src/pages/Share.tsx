@@ -60,7 +60,7 @@ function loadJsPDF(): Promise<any> {
 export function Share() {
   const tiradas = useTrainingStore((state) => state.tiradas);
   const rounds = useTrainingStore((state) => state.rounds);
-  const userPhone = useTrainingStore((state) => state.userPhone);
+  const userEmail = useTrainingStore((state) => state.userEmail);
   const language = useTrainingStore((state) => state.language);
   const t = translations[language];
 
@@ -118,8 +118,8 @@ export function Share() {
     const formattedDate = formatDate(tirada.date);
     doc.setFontSize(9.5);
     doc.text(`${t.share_excel_meta_date}: ${formattedDate}`, 190, 20, { align: 'right' });
-    if (userPhone) {
-      doc.text(`${t.share_excel_meta_phone}: ${userPhone}`, 190, 26, { align: 'right' });
+    if (userEmail) {
+      doc.text(`${t.share_excel_meta_phone}: ${userEmail}`, 190, 26, { align: 'right' });
     }
 
     // Session Info Card
@@ -354,8 +354,8 @@ Generado por Tiro22 · Agencia Pixer`;
       csvRows.push(`${t.share_pdf_info_distance};${modality.distance}`);
       csvRows.push(`${t.share_pdf_info_type};${sessionTypeLabel}`);
       csvRows.push(`${t.share_excel_meta_date};${formattedDate}`);
-      if (userPhone) {
-        csvRows.push(`${t.share_excel_meta_phone};${userPhone}`);
+      if (userEmail) {
+        csvRows.push(`${t.share_excel_meta_phone};${userEmail}`);
       }
       csvRows.push(`${t.share_pdf_info_result};${tirada.totalScore} pts (${tirada.totalShots} ${t.share_stats_shots})`);
       csvRows.push(`${t.share_pdf_info_average};${formatAverage(tirada.averageScore)}`);

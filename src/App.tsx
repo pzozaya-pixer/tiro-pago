@@ -13,22 +13,22 @@ import { translations } from './data/translations';
 
 export default function App() {
   const loadFromApi = useTrainingStore((state) => state.loadFromApi);
-  const userPhone = useTrainingStore((state) => state.userPhone);
+  const userEmail = useTrainingStore((state) => state.userEmail);
   const registerUser = useTrainingStore((state) => state.registerUser);
   const language = useTrainingStore((state) => state.language);
   const t = translations[language];
 
-  const [phone, setPhone] = useState('');
+  const [email, setEmail] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     // Carga inicial y sincronización de datos de la API solo si hay usuario registrado
-    if (userPhone) {
+    if (userEmail) {
       loadFromApi();
     }
 
     const handleOnline = () => {
-      if (userPhone) {
+      if (userEmail) {
         loadFromApi();
       }
     };
@@ -37,15 +37,15 @@ export default function App() {
     return () => {
       window.removeEventListener('online', handleOnline);
     };
-  }, [loadFromApi, userPhone]);
+  }, [loadFromApi, userEmail]);
 
-  const handleSubmitPhone = async (e: React.FormEvent) => {
+  const handleSubmitEmail = async (e: React.FormEvent) => {
     e.preventDefault();
-    const cleanPhone = phone.trim();
-    if (!cleanPhone) return;
+    const cleanEmail = email.trim();
+    if (!cleanEmail) return;
     setIsSubmitting(true);
     try {
-      await registerUser(cleanPhone);
+      await registerUser(cleanEmail);
     } catch (err) {
       console.error(err);
     } finally {
@@ -53,11 +53,11 @@ export default function App() {
     }
   };
 
-  // Si no hay teléfono registrado, bloqueamos la app con el onboarding
-  if (!userPhone) {
+  // Si no hay email registrado, bloqueamos la app con el onboarding
+  if (!userEmail) {
     return (
       <div className="onboarding-screen">
-        <form className="onboarding-card" onSubmit={handleSubmitPhone}>
+        <form className="onboarding-card" onSubmit={handleSubmitEmail}>
           <div className="onboarding-logo">
             <div className="header-logo-container" style={{ marginBottom: '10px' }}>
               <img
@@ -71,18 +71,18 @@ export default function App() {
             <p>{t.onboarding_subtitle}</p>
           </div>
           <label className="field">
-            <span>{t.onboarding_phone_label}</span>
+            <span>{t.onboarding_email_label}</span>
             <input
-              type="tel"
-              placeholder={t.onboarding_phone_placeholder}
-              value={phone}
-              onChange={(e) => setPhone(e.target.value)}
+              type="email"
+              placeholder={t.onboarding_email_placeholder}
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
               required
               disabled={isSubmitting}
               autoFocus
             />
           </label>
-          <button className="primary-button" type="submit" disabled={isSubmitting || !phone.trim()}>
+          <button className="primary-button" type="submit" disabled={isSubmitting || !email.trim()}>
             {isSubmitting ? t.onboarding_btn_loading : t.onboarding_btn_submit}
           </button>
         </form>
