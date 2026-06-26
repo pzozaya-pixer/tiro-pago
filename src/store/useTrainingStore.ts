@@ -1,16 +1,19 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { modalities } from '../data/modalities';
+import { modalities as seedModalities } from '../data/modalities';
 import { createId } from '../lib/id';
 import { recalculateSession, scoreRound } from '../lib/scoring';
 import { enqueueSync, flushQueue } from '../lib/sync';
-import type { Round, TiradaType, Tirada, Weapon } from '../types';
+import type { Round, TiradaType, Tirada, Weapon, Modality } from '../types';
+import type { Language } from '../data/translations';
 
 type TrainingState = {
   userPhone: string | null;
   tiradas: Tirada[];
   rounds: Round[];
   weapons: Weapon[];
+  modalities: Modality[];
+  language: Language;
   activeTiradaId?: string;
   registerUser: (phone: string) => Promise<void>;
   createTirada: (input: {
@@ -29,6 +32,10 @@ type TrainingState = {
   getActiveTirada: () => Tirada | undefined;
   loadFromApi: () => Promise<void>;
   deleteTirada: (id: string) => void;
+  setLanguage: (lang: Language) => void;
+  addModality: (input: Omit<Modality, 'id' | 'createdAt'>) => Modality;
+  updateModality: (id: string, input: Partial<Modality>) => void;
+  deleteModality: (id: string) => void;
 };
 
 const today = new Date().toISOString();
@@ -95,6 +102,30 @@ export const useTrainingStore = create<TrainingState>()(
           createdAt: today
         }
       ],
+      modalities: seedModalities,
+      language: 'es',
+      setLanguage: (lang) => set({ language: lang }),
+      addModality: (input) => {
+        const modality: Modality = {
+          id: createId('modality'),
+          ...input,
+          createdAt: new Date().toISOString()
+        };
+        set((state) => ({
+          modalities: [...state.modalities, modality]
+        }));
+        return modality;
+      },
+      updateModality: (id, input) => {
+        set((state) => ({
+          modalities: state.modalities.map((m) => (m.id === id ? { ...m, ...input } : m))
+        }));
+      },
+      deleteModality: (id) => {
+        set((state) => ({
+          modalities: state.modalities.filter((m) => m.id !== id)
+        }));
+      },
       activeTiradaId: 'seed-session-1',
       registerUser: async (phone) => {
         set({ userPhone: phone });
@@ -258,5 +289,6 @@ export const useTrainingStore = create<TrainingState>()(
 );
 
 export function findModality(modalityId: string) {
-  return modalities.find((modality) => modality.id === modalityId) ?? modalities[0];
+  const storeModalities = useTrainingStore.getState().modalities || seedModalities;
+  return storeModalities.find((modality) => modality.id === modalityId) ?? storeModalities[0] ?? seedModalities[0];
 }

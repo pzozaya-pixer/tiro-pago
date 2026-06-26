@@ -7,12 +7,16 @@ import { NewRound } from './pages/NewRound';
 import { NewTirada } from './pages/NewTirada';
 import { Share } from './pages/Share';
 import { Tiradas } from './pages/Tiradas';
+import { Settings } from './pages/Settings';
 import { useTrainingStore } from './store/useTrainingStore';
+import { translations } from './data/translations';
 
 export default function App() {
   const loadFromApi = useTrainingStore((state) => state.loadFromApi);
   const userPhone = useTrainingStore((state) => state.userPhone);
   const registerUser = useTrainingStore((state) => state.registerUser);
+  const language = useTrainingStore((state) => state.language);
+  const t = translations[language];
 
   const [phone, setPhone] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -63,14 +67,14 @@ export default function App() {
                 style={{ width: '80px', height: '80px', margin: '0 auto' }}
               />
             </div>
-            <h1>Tiro<span>22</span></h1>
-            <p>Registra tu número de teléfono para comenzar a guardar tus tiradas y tandas de forma segura.</p>
+            <h1>{t.onboarding_title}<span>22</span></h1>
+            <p>{t.onboarding_subtitle}</p>
           </div>
           <label className="field">
-            <span>Número de Teléfono</span>
+            <span>{t.onboarding_phone_label}</span>
             <input
               type="tel"
-              placeholder="Ej. 600000000"
+              placeholder={t.onboarding_phone_placeholder}
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
               required
@@ -79,7 +83,7 @@ export default function App() {
             />
           </label>
           <button className="primary-button" type="submit" disabled={isSubmitting || !phone.trim()}>
-            {isSubmitting ? 'Registrando...' : 'Comenzar'}
+            {isSubmitting ? t.onboarding_btn_loading : t.onboarding_btn_submit}
           </button>
         </form>
       </div>
@@ -95,10 +99,9 @@ export default function App() {
         <Route path="/tiradas" element={<Tiradas />} />
         <Route path="/historial" element={<History />} />
         <Route path="/compartir" element={<Share />} />
-        <Route path="/ajustes" element={<Tiradas mode="settings" />} />
+        <Route path="/ajustes" element={<Settings />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </AppShell>
   );
 }
-

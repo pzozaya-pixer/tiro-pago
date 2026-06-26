@@ -2,10 +2,14 @@ import { useState } from 'react';
 import { findModality, useTrainingStore } from '../store/useTrainingStore';
 import { formatAverage, formatDate } from '../lib/scoring';
 import { ChevronDown, ChevronUp } from 'lucide-react';
+import { translations } from '../data/translations';
 
 export function History() {
   const tiradas = useTrainingStore((state) => state.tiradas);
   const rounds = useTrainingStore((state) => state.rounds);
+  const language = useTrainingStore((state) => state.language);
+  const t = translations[language];
+
   const [expandedSessionId, setExpandedSessionId] = useState<string | null>(null);
 
   const officialRounds = rounds.filter((r) => !r.isPrueba);
@@ -18,8 +22,8 @@ export function History() {
     <div className="page list-page">
       <header className="compact-header compact-header--row">
         <div>
-          <h1>Historial</h1>
-          <p>Evolución básica por modalidad y tandas registradas.</p>
+          <h1>{t.history_title}</h1>
+          <p>{t.history_subtitle}</p>
         </div>
         <div className="header-logo-container">
           <img
@@ -32,25 +36,25 @@ export function History() {
 
       <div className="history-grid">
         <article>
-          <span>Total disparos</span>
+          <span>{t.history_stat_shots}</span>
           <strong>{totalShots}</strong>
         </article>
         <article>
-          <span>Media global</span>
+          <span>{t.history_stat_average}</span>
           <strong>{formatAverage(totalShots ? totalScore / totalShots : 0)}</strong>
         </article>
         <article>
-          <span>Mejor tanda</span>
+          <span>{t.history_stat_best}</span>
           <strong>{bestRound ? `${bestRound.totalScore}/50` : '-'}</strong>
         </article>
         <article>
-          <span>Peor tanda</span>
+          <span>{t.history_stat_worst}</span>
           <strong>{worstRound ? `${worstRound.totalScore}/50` : '-'}</strong>
         </article>
       </div>
 
       <section>
-        <h2>Histórico de tiradas</h2>
+        <h2>{t.history_section_title}</h2>
         <div className="simple-list">
           {tiradas.map((tirada) => {
             const isExpanded = expandedSessionId === tirada.id;
@@ -67,9 +71,9 @@ export function History() {
               >
                 <div className="history-session-card__header">
                   <div>
-                    <strong>{modality.name.replace(' .22 LR', '')}</strong>
+                    <strong>{modality ? modality.name.replace(' .22 LR', '') : 'Modalidad'}</strong>
                     <span>
-                      {formatDate(tirada.date)} · {tirada.totalShots} disparos · media {formatAverage(tirada.averageScore)}
+                      {formatDate(tirada.date)} · {tirada.totalShots} {t.share_stats_shots} · {t.share_stats_average.toLowerCase()} {formatAverage(tirada.averageScore)}
                     </span>
                   </div>
                   <div className="history-session-card__toggle">
@@ -80,26 +84,26 @@ export function History() {
                 {isExpanded && (
                   <div className="session-detail-rounds" onClick={(e) => e.stopPropagation()}>
                     {sessionRounds.length === 0 ? (
-                      <p className="no-rounds-text">No hay tandas registradas en esta tirada.</p>
+                      <p className="no-rounds-text">{t.history_no_rounds}</p>
                     ) : (
                       <div className="table-responsive">
                         <table className="rounds-table">
                           <thead>
                             <tr>
-                              <th>Tanda</th>
+                              <th>{t.share_pdf_table_tanda}</th>
                               <th className="text-center">D1</th>
                               <th className="text-center">D2</th>
                               <th className="text-center">D3</th>
                               <th className="text-center">D4</th>
                               <th className="text-center">D5</th>
-                              <th className="text-right">Total</th>
+                              <th className="text-right">{t.share_pdf_table_total}</th>
                             </tr>
                           </thead>
                           <tbody>
                             {(() => {
                               let competitionCount = 0;
                               return sessionRounds.map((round) => {
-                                const roundLabel = round.isPrueba ? 'Prueba' : `Tanda ${++competitionCount}`;
+                                const roundLabel = round.isPrueba ? t.new_round_title_prueba : `${t.new_round_title_tanda} ${++competitionCount}`;
                                 return (
                                   <tr key={round.id}>
                                     <td className="round-num-col">{roundLabel}</td>

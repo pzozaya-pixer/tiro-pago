@@ -1,16 +1,21 @@
 import type { PropsWithChildren } from 'react';
 import { NavLink } from 'react-router-dom';
 import { BarChart3, Crosshair, Home, Settings, Share2 } from 'lucide-react';
-
-const navItems = [
-  { to: '/', label: 'Inicio', icon: Home },
-  { to: '/tiradas', label: 'Tiradas', icon: Crosshair },
-  { to: '/historial', label: 'Historial', icon: BarChart3 },
-  { to: '/compartir', label: 'Compartir', icon: Share2 },
-  { to: '/ajustes', label: 'Ajustes', icon: Settings }
-];
+import { useTrainingStore } from '../store/useTrainingStore';
+import { translations } from '../data/translations';
 
 export function AppShell({ children }: PropsWithChildren) {
+  const language = useTrainingStore((state) => state.language);
+  const t = translations[language];
+
+  const navItems = [
+    { to: '/', label: t.nav_home, icon: Home },
+    { to: '/tiradas', label: t.nav_sessions, icon: Crosshair },
+    { to: '/historial', label: t.nav_history, icon: BarChart3 },
+    { to: '/compartir', label: t.nav_share, icon: Share2 },
+    { to: '/ajustes', label: t.nav_settings, icon: Settings }
+  ];
+
   return (
     <div className="app-shell">
       <main className="app-screen">{children}</main>

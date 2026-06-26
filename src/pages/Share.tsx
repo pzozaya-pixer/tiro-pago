@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react';
 import { findModality, useTrainingStore } from '../store/useTrainingStore';
 import { formatAverage, formatDate } from '../lib/scoring';
-import { Calendar, ChevronRight, FileText, Loader2, Share2, Target, Trophy } from 'lucide-react';
+import { FileText, Loader2, Share2, Target } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { translations } from '../data/translations';
 
 // Load jsPDF dynamically from CDN with polling fallback to prevent duplicate scripts and race conditions
 function loadJsPDF(): Promise<any> {
@@ -59,16 +60,19 @@ function loadJsPDF(): Promise<any> {
 export function Share() {
   const tiradas = useTrainingStore((state) => state.tiradas);
   const rounds = useTrainingStore((state) => state.rounds);
-  const weapons = useTrainingStore((state) => state.weapons);
   const userPhone = useTrainingStore((state) => state.userPhone);
+  const language = useTrainingStore((state) => state.language);
+  const t = translations[language];
+
   const [sharingId, setSharingId] = useState<string | null>(null);
+  const [exportingId, setExportingId] = useState<string | null>(null);
 
   // Pre-load jsPDF on component mount to keep the user interaction gesture fresh for native sharing
   useEffect(() => {
     loadJsPDF().catch((err) => console.error('Error pre-loading jsPDF:', err));
   }, []);
 
-  // Generate a premium typographic PDF document
+  // Generate a premium typographic PDF document in the selected language
   const generatePDF = async (tiradaId: string) => {
     const tirada = tiradas.find((t) => t.id === tiradaId);
     if (!tirada) return null;
@@ -76,7 +80,6 @@ export function Share() {
       .filter((r) => r.sessionId === tiradaId)
       .sort((a, b) => a.roundNumber - b.roundNumber);
     const modality = findModality(tirada.modalityId);
-    const weapon = weapons.find((w) => w.id === tirada.weaponId);
 
     const jspdfModule = await loadJsPDF();
     const { jsPDF } = jspdfModule;
@@ -108,15 +111,15 @@ export function Share() {
 
     doc.setFontSize(9.5);
     doc.setFont('helvetica', 'normal');
-    doc.text('REPORTE OFICIAL DE TIRADA', 20, 26);
-    doc.text('Desarrollado por Agencia Pixer', 20, 31);
+    doc.text(t.share_pdf_title, 20, 26);
+    doc.text(t.share_pdf_sub, 20, 31);
 
     // Top-right header metadata inside the box
     const formattedDate = formatDate(tirada.date);
     doc.setFontSize(9.5);
-    doc.text(`Fecha: ${formattedDate}`, 190, 20, { align: 'right' });
+    doc.text(`${t.share_excel_meta_date}: ${formattedDate}`, 190, 20, { align: 'right' });
     if (userPhone) {
-      doc.text(`Tlf: ${userPhone}`, 190, 26, { align: 'right' });
+      doc.text(`${t.share_excel_meta_phone}: ${userPhone}`, 190, 26, { align: 'right' });
     }
 
     // Session Info Card
@@ -130,25 +133,27 @@ export function Share() {
     doc.setTextColor(colorPrimary[0], colorPrimary[1], colorPrimary[2]);
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(11);
-    doc.text('INFORMACIÓN GENERAL', 20, 55);
+    doc.text(t.share_pdf_info_title, 20, 55);
 
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(9.5);
     doc.setTextColor(colorText[0], colorText[1], colorText[2]);
 
+    const typeLabel = tirada.type === 'competicion' ? t.new_tirada_type_competition : t.new_tirada_type_training;
+
     // Left Column Info
-    doc.text(`Modalidad: ${modality.name}`, 20, 62);
-    doc.text(`Calibre: ${modality.caliber} · Distancia: ${modality.distance}`, 20, 70);
+    doc.text(`${t.share_pdf_info_modality}: ${modality.name}`, 20, 62);
+    doc.text(`${t.share_pdf_info_caliber}: ${modality.caliber} · ${t.share_pdf_info_distance}: ${modality.distance}`, 20, 70);
 
     // Right Column Info
-    doc.text(`Tipo: ${tirada.type === 'competicion' ? 'Competición' : 'Entrenamiento'}`, 110, 62);
-    doc.text(`Resultado: ${tirada.totalScore} pts (${tirada.totalShots} disparos · Media ${formatAverage(tirada.averageScore)})`, 110, 70);
+    doc.text(`${t.share_pdf_info_type}: ${typeLabel}`, 110, 62);
+    doc.text(`${t.share_pdf_info_result}: ${tirada.totalScore} pts (${tirada.totalShots} ${t.share_stats_shots} · ${t.share_stats_average} ${formatAverage(tirada.averageScore)})`, 110, 70);
 
     // Section Header: Tandas Detail
     doc.setTextColor(colorPrimary[0], colorPrimary[1], colorPrimary[2]);
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(12);
-    doc.text('DETALLE DE LAS TANDAS', 15, 90);
+    doc.text(t.share_pdf_detail_title, 15, 90);
 
     // Table Column Headers
     doc.setFillColor(colorPrimary[0], colorPrimary[1], colorPrimary[2]);
@@ -157,13 +162,13 @@ export function Share() {
     doc.setTextColor(255, 255, 255);
     doc.setFontSize(9);
     doc.setFont('helvetica', 'bold');
-    doc.text('Tanda', 18, 99.5);
+    doc.text(t.share_pdf_table_tanda, 18, 99.5);
     doc.text('D1', 55, 99.5, { align: 'center' });
     doc.text('D2', 75, 99.5, { align: 'center' });
     doc.text('D3', 95, 99.5, { align: 'center' });
     doc.text('D4', 115, 99.5, { align: 'center' });
     doc.text('D5', 135, 99.5, { align: 'center' });
-    doc.text('Total', 180, 99.5, { align: 'right' });
+    doc.text(t.share_pdf_table_total, 180, 99.5, { align: 'right' });
 
     // Table Rows
     let y = 102;
@@ -186,12 +191,12 @@ export function Share() {
       // Round type Label
       let label = '';
       if (round.isPrueba) {
-        label = 'Prueba';
+        label = t.new_round_title_prueba;
         doc.setTextColor(37, 99, 235); // Blue color for Prueba round
         doc.setFont('helvetica', 'bold');
       } else {
         competitionCount++;
-        label = `Tanda ${competitionCount}`;
+        label = `${t.new_round_title_tanda} ${competitionCount}`;
         doc.setTextColor(colorText[0], colorText[1], colorText[2]);
         doc.setFont('helvetica', 'normal');
       }
@@ -230,7 +235,7 @@ export function Share() {
       doc.setTextColor(colorPrimary[0], colorPrimary[1], colorPrimary[2]);
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(10);
-      doc.text('Resumen Estadístico:', 15, y);
+      doc.text(t.share_pdf_stats_title, 15, y);
 
       doc.setFont('helvetica', 'normal');
       doc.setFontSize(9);
@@ -240,8 +245,8 @@ export function Share() {
       const bestRoundVal = validRounds.reduce((max, r) => (r.totalScore > max ? r.totalScore : max), 0);
       const worstRoundVal = validRounds.reduce((min, r) => (r.totalScore < min ? r.totalScore : min), 50);
 
-      doc.text(`Tanda oficial más alta: ${bestRoundVal ? bestRoundVal + '/50 pts' : '-'}`, 15, y + 5);
-      doc.text(`Tanda oficial más baja: ${bestRoundVal ? worstRoundVal + '/50 pts' : '-'}`, 110, y + 5);
+      doc.text(`${t.share_pdf_stats_best}: ${bestRoundVal ? bestRoundVal + '/50 pts' : '-'}`, 15, y + 5);
+      doc.text(`${t.share_pdf_stats_worst}: ${bestRoundVal ? worstRoundVal + '/50 pts' : '-'}`, 110, y + 5);
     }
 
     // Watermark at the bottom
@@ -249,7 +254,7 @@ export function Share() {
     doc.setFont('helvetica', 'italic');
     doc.setFontSize(8.5);
     doc.text(
-      'Este reporte fue generado de manera automática por Tiro22 en colaboración con Agencia Pixer.',
+      t.share_pdf_watermark,
       105,
       287,
       { align: 'center' }
@@ -273,14 +278,16 @@ export function Share() {
       const filename = `Tirada_${modality.name.replace(/\s+/g, '_')}_${formattedDate.replace(/\//g, '-')}.pdf`;
       const pdfFile = new File([pdfBlob], filename, { type: 'application/pdf' });
 
-      // Clean formatted message summary for WhatsApp
-      const textSummary = `🏆 *Tiro22 - Resumen de Tirada* 🏆
+      const typeLabel = tirada.type === 'competicion' ? t.new_tirada_type_competition : t.new_tirada_type_training;
+
+      // Clean formatted message summary for WhatsApp sharing
+      const textSummary = `🏆 *Tiro22 - ${t.share_pdf_title}* 🏆
 ----------------------------------
-🎯 *Modalidad:* ${modality.name.replace(' .22 LR', '')}
-📅 *Fecha:* ${formattedDate}
-📝 *Tipo:* ${tirada.type === 'competicion' ? 'Competición' : 'Entrenamiento'}
-📊 *Resultado:* ${tirada.totalScore} pts (${tirada.totalShots} disparos)
-📈 *Media:* ${formatAverage(tirada.averageScore)}
+🎯 *${t.share_pdf_info_modality}:* ${modality.name.replace(' .22 LR', '')}
+📅 *${t.share_excel_meta_date}:* ${formattedDate}
+📝 *${t.share_pdf_info_type}:* ${typeLabel}
+📊 *${t.share_pdf_info_result}:* ${tirada.totalScore} pts (${tirada.totalShots} ${t.share_stats_shots})
+📈 *${t.share_pdf_info_average}:* ${formatAverage(tirada.averageScore)}
 ----------------------------------
 Generado por Tiro22 · Agencia Pixer`;
 
@@ -299,7 +306,7 @@ Generado por Tiro22 · Agencia Pixer`;
         try {
           await navigator.share({
             files: [pdfFile],
-            title: `Reporte de Tirada - ${modality.name}`,
+            title: `${t.share_pdf_title} - ${modality.name}`,
             text: textSummary
           });
         } catch (shareErr) {
@@ -322,12 +329,120 @@ Generado por Tiro22 · Agencia Pixer`;
     }
   };
 
+  const handleExcelExport = (tiradaId: string) => {
+    setExportingId(tiradaId);
+    try {
+      const tirada = tiradas.find((t) => t.id === tiradaId);
+      if (!tirada) return;
+
+      const sessionRounds = rounds
+        .filter((r) => r.sessionId === tiradaId)
+        .sort((a, b) => a.roundNumber - b.roundNumber);
+      const modality = findModality(tirada.modalityId);
+
+      const formattedDate = formatDate(tirada.date);
+      const sessionTypeLabel = tirada.type === 'competicion' ? t.new_tirada_type_competition : t.new_tirada_type_training;
+
+      // Build Excel-compatible CSV rows
+      const csvRows: string[] = [];
+
+      // Metadata section at the top of the file
+      csvRows.push(`${t.share_excel_meta_title}`);
+      csvRows.push('');
+      csvRows.push(`${t.share_pdf_info_modality};${modality.name}`);
+      csvRows.push(`${t.share_pdf_info_caliber};${modality.caliber}`);
+      csvRows.push(`${t.share_pdf_info_distance};${modality.distance}`);
+      csvRows.push(`${t.share_pdf_info_type};${sessionTypeLabel}`);
+      csvRows.push(`${t.share_excel_meta_date};${formattedDate}`);
+      if (userPhone) {
+        csvRows.push(`${t.share_excel_meta_phone};${userPhone}`);
+      }
+      csvRows.push(`${t.share_pdf_info_result};${tirada.totalScore} pts (${tirada.totalShots} ${t.share_stats_shots})`);
+      csvRows.push(`${t.share_pdf_info_average};${formatAverage(tirada.averageScore)}`);
+      csvRows.push('');
+
+      // Detail Table Column Headers
+      const headers = [
+        t.share_excel_round_num,
+        'D1',
+        'D2',
+        'D3',
+        'D4',
+        'D5',
+        t.share_pdf_table_total,
+        t.share_excel_round_average,
+        t.share_excel_best_shot,
+        t.share_excel_worst_shot
+      ];
+      csvRows.push(headers.join(';'));
+
+      // Detail Table Rows
+      let competitionCount = 0;
+      sessionRounds.forEach((round) => {
+        let label = '';
+        if (round.isPrueba) {
+          label = t.new_round_title_prueba;
+        } else {
+          competitionCount++;
+          label = `${t.new_round_title_tanda} ${competitionCount}`;
+        }
+
+        const shot1 = round.shots[0] === undefined ? '-' : round.shots[0] === 0 ? 'M' : String(round.shots[0]);
+        const shot2 = round.shots[1] === undefined ? '-' : round.shots[1] === 0 ? 'M' : String(round.shots[1]);
+        const shot3 = round.shots[2] === undefined ? '-' : round.shots[2] === 0 ? 'M' : String(round.shots[2]);
+        const shot4 = round.shots[3] === undefined ? '-' : round.shots[3] === 0 ? 'M' : String(round.shots[3]);
+        const shot5 = round.shots[4] === undefined ? '-' : round.shots[4] === 0 ? 'M' : String(round.shots[4]);
+
+        const totalStr = `${round.totalScore} pts`;
+        const avgStr = formatAverage(round.averageScore);
+        const bestStr = round.bestShot === undefined ? '-' : round.bestShot === 0 ? 'M' : String(round.bestShot);
+        const worstStr = round.worstShot === undefined ? '-' : round.worstShot === 0 ? 'M' : String(round.worstShot);
+
+        const row = [
+          label,
+          shot1,
+          shot2,
+          shot3,
+          shot4,
+          shot5,
+          totalStr,
+          avgStr,
+          bestStr,
+          worstStr
+        ];
+        csvRows.push(row.join(';'));
+      });
+
+      // Join lines using Windows carriage returns for best Excel compatibility
+      const csvContent = csvRows.join('\r\n');
+
+      // Use a UTF-8 BOM so Excel opens special characters (accents, French glyphs) correctly automatically
+      const BOM = '\uFEFF';
+      const blob = new Blob([BOM + csvContent], { type: 'text/csv;charset=utf-8;' });
+      
+      const link = document.createElement('a');
+      const filenameDate = formattedDate.replace(/\//g, '-');
+      const cleanModalityName = modality.name.replace(/\s+/g, '_');
+      
+      link.href = URL.createObjectURL(blob);
+      link.setAttribute('download', `Tirada_${cleanModalityName}_${filenameDate}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    } catch (err) {
+      console.error('Error exporting to Excel:', err);
+      alert('No se pudo exportar el reporte a Excel. Por favor, inténtelo de nuevo.');
+    } finally {
+      setExportingId(null);
+    }
+  };
+
   return (
     <div className="page list-page">
       <header className="compact-header compact-header--row">
         <div>
-          <h1>Compartir</h1>
-          <p>Exporta reportes oficiales de tus tiradas y compártelos.</p>
+          <h1>{t.share_title}</h1>
+          <p>{t.share_subtitle}</p>
         </div>
         <div className="header-logo-container">
           <img
@@ -342,12 +457,10 @@ Generado por Tiro22 · Agencia Pixer`;
         {tiradas.length === 0 ? (
           <div className="empty-share-card">
             <Target size={48} className="empty-icon" />
-            <h3>No hay tiradas registradas</h3>
-            <p>
-              Registra y completa tu primera tirada para poder generar reportes en PDF y compartirlos con tus contactos.
-            </p>
+            <h3>{t.share_empty_title}</h3>
+            <p>{t.share_empty_desc}</p>
             <Link to="/nueva-tirada" className="primary-button">
-              Comenzar Tirada
+              {t.share_empty_btn}
             </Link>
           </div>
         ) : (
@@ -355,6 +468,7 @@ Generado por Tiro22 · Agencia Pixer`;
             {tiradas.map((tirada) => {
               const modality = findModality(tirada.modalityId);
               const isSharing = sharingId === tirada.id;
+              const isExporting = exportingId === tirada.id;
 
               return (
                 <article key={tirada.id} className="share-session-card">
@@ -362,35 +476,58 @@ Generado por Tiro22 · Agencia Pixer`;
                     <div className="share-session-card__info">
                       <strong>{modality.name.replace(' .22 LR', '')}</strong>
                       <span>
-                        {formatDate(tirada.date)} · {tirada.type === 'competicion' ? 'Competición' : 'Entrenamiento'}
+                        {formatDate(tirada.date)} · {tirada.type === 'competicion' ? t.new_tirada_type_competition : t.new_tirada_type_training}
                       </span>
                       <p className="share-session-card__stats">
                         <span>{tirada.totalScore} pts</span>
                         <i className="bullet" />
-                        <span>{tirada.totalShots} disparos</span>
+                        <span>{tirada.totalShots} {t.share_stats_shots}</span>
                         <i className="bullet" />
-                        <span>Media {formatAverage(tirada.averageScore)}</span>
+                        <span>{t.share_stats_average} {formatAverage(tirada.averageScore)}</span>
                       </p>
                     </div>
-                    <button
-                      type="button"
-                      className="primary-button share-button"
-                      onClick={() => handleShare(tirada.id)}
-                      disabled={isSharing}
-                      aria-label="Compartir PDF"
-                    >
-                      {isSharing ? (
-                        <>
-                          <Loader2 size={18} className="spinner" />
-                          <span>Procesando...</span>
-                        </>
-                      ) : (
-                        <>
-                          <Share2 size={18} />
-                          <span>Compartir</span>
-                        </>
-                      )}
-                    </button>
+
+                    <div className="share-session-card__actions">
+                      <button
+                        type="button"
+                        className="primary-button share-button"
+                        onClick={() => handleShare(tirada.id)}
+                        disabled={isSharing || isExporting}
+                        aria-label="Compartir PDF"
+                      >
+                        {isSharing ? (
+                          <>
+                            <Loader2 size={18} className="spinner" />
+                            <span>{t.share_btn_processing}</span>
+                          </>
+                        ) : (
+                          <>
+                            <Share2 size={18} />
+                            <span>{t.share_btn_share}</span>
+                          </>
+                        )}
+                      </button>
+
+                      <button
+                        type="button"
+                        className="ghost-button excel-button"
+                        onClick={() => handleExcelExport(tirada.id)}
+                        disabled={isSharing || isExporting}
+                        aria-label="Exportar Excel"
+                      >
+                        {isExporting ? (
+                          <>
+                            <Loader2 size={18} className="spinner" />
+                            <span>{t.share_btn_processing}</span>
+                          </>
+                        ) : (
+                          <>
+                            <FileText size={18} />
+                            <span>{t.share_btn_excel}</span>
+                          </>
+                        )}
+                      </button>
+                    </div>
                   </div>
                 </article>
               );

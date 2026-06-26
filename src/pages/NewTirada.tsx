@@ -1,22 +1,26 @@
 import { useNavigate } from 'react-router-dom';
 import { Calendar, ChevronDown, Crosshair, Gauge, Save, Target } from 'lucide-react';
-import { modalities } from '../data/modalities';
 import { useTrainingStore } from '../store/useTrainingStore';
 import type { TiradaType } from '../types';
 import { useState } from 'react';
+import { translations } from '../data/translations';
 
 export function NewTirada() {
   const navigate = useNavigate();
   const createTirada = useTrainingStore((state) => state.createTirada);
-  const [modalityId, setModalityId] = useState(modalities[0].id);
+  const modalities = useTrainingStore((state) => state.modalities);
+  const language = useTrainingStore((state) => state.language);
+  const t = translations[language];
+
+  const [modalityId, setModalityId] = useState(modalities[0]?.id || '');
   const [type, setType] = useState<TiradaType>('entrenamiento');
   const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
   const [isOpen, setIsOpen] = useState(false);
 
   const selectedModality = modalities.find((m) => m.id === modalityId) ?? modalities[0];
-  const TriggerIcon = selectedModality.id.includes('rapid')
+  const TriggerIcon = selectedModality?.id.includes('rapid')
     ? Gauge
-    : selectedModality.weaponType === 'rifle'
+    : selectedModality?.weaponType === 'rifle'
     ? Target
     : Crosshair;
 
@@ -34,8 +38,8 @@ export function NewTirada() {
     <form className="page form-page" onSubmit={handleSubmit}>
       <header className="compact-header compact-header--row">
         <div>
-          <h1>Nueva tirada</h1>
-          <p>Selecciona modalidad y tipo de entrenamiento.</p>
+          <h1>{t.new_tirada_title}</h1>
+          <p>{t.new_tirada_subtitle}</p>
         </div>
         <div className="header-logo-container">
           <img src={`${import.meta.env.BASE_URL}logo-pixer.png`} alt="Agencia Pixer" className="header-logo" />
@@ -43,17 +47,24 @@ export function NewTirada() {
       </header>
 
       <div className="custom-dropdown-container">
-        <span className="field-label">Modalidad</span>
+        <span className="field-label">{t.new_tirada_modality}</span>
         <div className="custom-dropdown">
           <button
             type="button"
             className={`custom-dropdown__trigger ${isOpen ? 'is-open' : ''}`}
             onClick={() => setIsOpen(!isOpen)}
+            disabled={modalities.length === 0}
           >
-            <div className="custom-dropdown__trigger-content">
-              <TriggerIcon size={20} className="custom-dropdown__icon" />
-              <span>{selectedModality?.name}</span>
-            </div>
+            {selectedModality ? (
+              <div className="custom-dropdown__trigger-content">
+                <TriggerIcon size={20} className="custom-dropdown__icon" />
+                <span>{selectedModality.name}</span>
+              </div>
+            ) : (
+              <div className="custom-dropdown__trigger-content">
+                <span>-</span>
+              </div>
+            )}
             <ChevronDown size={18} className={`custom-dropdown__arrow ${isOpen ? 'is-open' : ''}`} />
           </button>
 
@@ -94,25 +105,28 @@ export function NewTirada() {
         </div>
       </div>
 
-      <div className="segmented">
-        {(['entrenamiento', 'competicion'] as TiradaType[]).map((item) => (
-          <button key={item} type="button" className={type === item ? 'is-active' : ''} onClick={() => setType(item)}>
-            {item}
-          </button>
-        ))}
+      <div className="custom-dropdown-container" style={{ marginBottom: '20px' }}>
+        <span className="field-label">{t.new_tirada_type}</span>
+        <div className="segmented">
+          {(['entrenamiento', 'competicion'] as TiradaType[]).map((item) => (
+            <button key={item} type="button" className={type === item ? 'is-active' : ''} onClick={() => setType(item)}>
+              {item === 'entrenamiento' ? t.new_tirada_type_training : t.new_tirada_type_competition}
+            </button>
+          ))}
+        </div>
       </div>
 
       <label className="field">
-        <span>Fecha</span>
+        <span>{t.new_tirada_date}</span>
         <div className="input-with-icon">
           <Calendar size={20} />
           <input type="date" value={date} onChange={(event) => setDate(event.target.value)} />
         </div>
       </label>
 
-      <button className="primary-button" type="submit">
+      <button className="primary-button" type="submit" disabled={modalities.length === 0}>
         <Save size={22} />
-        Crear tirada
+        {t.new_tirada_btn_submit}
       </button>
     </form>
   );
