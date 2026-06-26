@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { findModality, useTrainingStore } from '../store/useTrainingStore';
 import { formatAverage, formatDate } from '../lib/scoring';
-import { FileText, Loader2, Share2, Target } from 'lucide-react';
+import { Download, FileText, Loader2, Share2, Target } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { translations } from '../data/translations';
 import { jsPDF } from 'jspdf';
@@ -205,7 +205,28 @@ export function Share() {
     return doc;
   };
 
-  const handleShare = async (tiradaId: string) => {
+  // Direct download of the PDF. Synchronous flow, 100% immune to popup blocking
+  const handlePDFDownload = (tiradaId: string) => {
+    try {
+      const tirada = tiradas.find((t) => t.id === tiradaId);
+      if (!tirada) return;
+      const modality = findModality(tirada.modalityId);
+
+      const doc = generatePDF(tiradaId);
+      if (!doc) return;
+
+      const formattedDate = formatDate(tirada.date);
+      const filename = `Tirada_${modality.name.replace(/\s+/g, '_')}_${formattedDate.replace(/\//g, '-')}.pdf`;
+      
+      doc.save(filename);
+    } catch (err) {
+      console.error('Error downloading PDF:', err);
+      alert('No se pudo descargar el reporte en PDF. Por favor, inténtelo de nuevo.');
+    }
+  };
+
+  // Synchronous sharing flow to prevent browser gesture loss and avoid blocked popups/share dialogs
+  const handleShare = (tiradaId: string) => {
     setSharingId(tiradaId);
     try {
       const tirada = tiradas.find((t) => t.id === tiradaId);
@@ -246,13 +267,11 @@ Generado por Tiro22 · Agencia Pixer`;
         navigator.canShare &&
         navigator.canShare({ files: [pdfFile] })
       ) {
-        try {
-          await navigator.share({
-            files: [pdfFile],
-            title: `${t.share_pdf_title} - ${modality.name}`,
-            text: textSummary
-          });
-        } catch (shareErr) {
+        navigator.share({
+          files: [pdfFile],
+          title: `${t.share_pdf_title} - ${modality.name}`,
+          text: textSummary
+        }).catch((shareErr) => {
           console.warn('Native share failed or cancelled, executing fallback:', shareErr);
           // Only skip fallback if the user intentionally cancelled/aborted the native share sheet
           if (shareErr instanceof Error && shareErr.name === 'AbortError') {
@@ -260,7 +279,7 @@ Generado por Tiro22 · Agencia Pixer`;
           } else {
             runFallback();
           }
-        }
+        });
       } else {
         runFallback();
       }
@@ -447,7 +466,8 @@ Generado por Tiro22 · Agencia Pixer`;
                         className="primary-button share-button"
                         onClick={() => handleShare(tirada.id)}
                         disabled={isSharing || isExporting}
-                        aria-label="Compartir PDF"
+                        style={{ minHeight: '44px', borderRadius: '12px', fontSize: '0.92rem', fontWeight: 800 }}
+                        aria-label="Compartir"
                       >
                         {isSharing ? (
                           <>
@@ -462,25 +482,38 @@ Generado por Tiro22 · Agencia Pixer`;
                         )}
                       </button>
 
-                      <button
-                        type="button"
-                        className="ghost-button excel-button"
-                        onClick={() => handleExcelExport(tirada.id)}
-                        disabled={isSharing || isExporting}
-                        aria-label="Exportar Excel"
-                      >
-                        {isExporting ? (
-                          <>
-                            <Loader2 size={18} className="spinner" />
-                            <span>{t.share_btn_processing}</span>
-                          </>
-                        ) : (
-                          <>
-                            <FileText size={18} />
-                            <span>{t.share_btn_excel}</span>
-                          </>
-                        )}
-                      </button>
+                      <div className="share-session-card__actions-row">
+                        <button
+                          type="button"
+                          className="ghost-button excel-button"
+                          onClick={() => handlePDFDownload(tirada.id)}
+                          disabled={isSharing || isExporting}
+                          aria-label="Descargar PDF"
+                        >
+                          <Download size={18} />
+                          <span>PDF</span>
+                        </button>
+
+                        <button
+                          type="button"
+                          className="ghost-button excel-button"
+                          onClick={() => handleExcelExport(tirada.id)}
+                          disabled={isSharing || isExporting}
+                          aria-label="Exportar Excel"
+                        >
+                          {isExporting ? (
+                            <>
+                              <Loader2 size={18} className="spinner" />
+                              <span>{t.share_btn_processing}</span>
+                            </>
+                          ) : (
+                            <>
+                              <FileText size={18} />
+                              <span>Excel</span>
+                            </>
+                          )}
+                        </button>
+                      </div>
                     </div>
                   </div>
                 </article>
