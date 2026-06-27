@@ -2048,4 +2048,82 @@ a {
   transform: translateY(-1px);
 }
 
+/* Onboarding PWA Install Button */
+.onboarding-install-btn {
+  margin-top: 10px;
+  background: rgba(255, 255, 255, 0.05) !important;
+  color: var(--text) !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  border-radius: 17px !important;
+  min-height: 52px !important;
+  font-size: 0.98rem !important;
+  font-weight: 850 !important;
+  box-shadow: none !important;
+  transition: all 0.2s ease-in-out !important;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  cursor: pointer;
+}
+
+.onboarding-install-btn:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.09) !important;
+  border-color: rgba(255, 255, 255, 0.15) !important;
+}
+
+/* iOS Install Banner */
+.ios-install-banner {
+  position: fixed;
+  bottom: 24px;
+  left: 20px;
+  right: 20px;
+  max-width: 520px;
+  margin: 0 auto;
+  z-index: 100;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: rgba(20, 28, 36, 0.94);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  box-shadow: var(--shadow);
+  padding: 20px;
+  animation: slideUpInstall 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  cursor: pointer;
+}
+
+@keyframes slideUpInstall {
+  from {
+    opacity: 0;
+    transform: translateY(40px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.ios-install-banner__content {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  text-align: left;
+}
+
+.ios-install-banner h4 {
+  margin: 0;
+  color: var(--green);
+  font-size: 1.15rem;
+  font-weight: 850;
+}
+
+.ios-install-banner p {
+  margin: 0;
+  color: var(--text);
+  font-size: 0.92rem;
+  line-height: 1.45;
+}
+
+
 
