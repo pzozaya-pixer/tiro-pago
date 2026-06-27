@@ -9,13 +9,17 @@ import type { Language } from '../data/translations';
 
 type TrainingState = {
   userEmail: string | null;
+  subscriptionStatus: string | null;
   tiradas: Tirada[];
   rounds: Round[];
   weapons: Weapon[];
   modalities: Modality[];
   language: Language;
   activeTiradaId?: string;
-  registerUser: (email: string) => Promise<void>;
+  sendOtp: (email: string) => Promise<{ requiresRegistration: boolean }>;
+  verifyOtp: (email: string, token: string) => Promise<{ requiresRegistration: boolean; subscriptionStatus?: string }>;
+  registerSubscription: (email: string, name: string, paymentMethodId: string) => Promise<{ success: boolean; error?: string; message?: string }>;
+  logout: () => void;
   createTirada: (input: {
     modalityId: string;
     weaponId?: string;
@@ -80,6 +84,7 @@ export const useTrainingStore = create<TrainingState>()(
   persist(
     (set, get) => ({
       userEmail: null,
+      subscriptionStatus: null,
       tiradas: seedTiradas,
       rounds: [],
       weapons: [
@@ -127,23 +132,74 @@ export const useTrainingStore = create<TrainingState>()(
         }));
       },
       activeTiradaId: 'seed-session-1',
-      registerUser: async (email) => {
-        set({ userEmail: email });
-  
-        // Registrar en el backend si el proveedor es api
-        const provider = import.meta.env.VITE_DATA_PROVIDER ?? 'local';
-        if (provider === 'api') {
-          const apiUrl = import.meta.env.VITE_API_URL ?? '/api';
-          try {
-            await fetch(`${apiUrl}/register`, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ email })
-            });
-          } catch (error) {
-            console.error('Error registering user on backend:', error);
-          }
+      sendOtp: async (email) => {
+        const apiUrl = import.meta.env.VITE_API_URL ?? '/api';
+        const response = await fetch(`${apiUrl}/auth/send-otp`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email })
+        });
+        if (!response.ok) {
+          const err = await response.json();
+          throw new Error(err.error || 'Error al enviar el código');
         }
+        return await response.json();
+      },
+      verifyOtp: async (email, token) => {
+        const apiUrl = import.meta.env.VITE_API_URL ?? '/api';
+        const response = await fetch(`${apiUrl}/auth/verify-otp`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, token })
+        });
+        
+        if (!response.ok) {
+          const err = await response.json();
+          throw new Error(err.error || 'Código incorrecto o expirado');
+        }
+        
+        const data = await response.json();
+        if (data.success && !data.requiresRegistration) {
+          set({ 
+            userEmail: data.user.email,
+            subscriptionStatus: data.user.subscriptionStatus
+          });
+        }
+        return data;
+      },
+      registerSubscription: async (email, name, paymentMethodId) => {
+        const apiUrl = import.meta.env.VITE_API_URL ?? '/api';
+        const response = await fetch(`${apiUrl}/register-subscription`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, name, paymentMethodId })
+        });
+        
+        const data = await response.json();
+        if (!response.ok) {
+          return {
+            success: false,
+            error: data.error || 'REGISTRATION_FAILED',
+            message: data.message || 'Error al registrar la suscripción'
+          };
+        }
+        
+        set({ 
+          userEmail: data.user.email,
+          subscriptionStatus: data.user.subscriptionStatus
+        });
+        
+        return { success: true };
+      },
+      logout: () => {
+        set({ 
+          userEmail: null,
+          subscriptionStatus: null,
+          tiradas: seedTiradas,
+          rounds: [],
+          activeTiradaId: undefined
+        });
+        localStorage.removeItem('tiro22:offline-queue');
       },
       createTirada: (input) => {
         const userId = get().userEmail ?? 'demo-user';

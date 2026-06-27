@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useTrainingStore } from '../store/useTrainingStore';
 import { translations } from '../data/translations';
-import { AlertTriangle, Edit2, Globe, Plus, Save, Target, Trash2, X, Crosshair, Gauge } from 'lucide-react';
+import { AlertTriangle, Edit2, Globe, Plus, Save, Target, Trash2, X, Crosshair, Gauge, CreditCard, LogOut } from 'lucide-react';
 import type { Modality, WeaponType } from '../types';
 
 export function Settings() {
@@ -12,7 +12,34 @@ export function Settings() {
   const addModality = useTrainingStore((state) => state.addModality);
   const updateModality = useTrainingStore((state) => state.updateModality);
   const deleteModality = useTrainingStore((state) => state.deleteModality);
+  const userEmail = useTrainingStore((state) => state.userEmail);
+  const subscriptionStatus = useTrainingStore((state) => state.subscriptionStatus);
+  const logout = useTrainingStore((state) => state.logout);
   const t = translations[language];
+
+  const [isPortalLoading, setIsPortalLoading] = useState(false);
+
+  const handleManageSubscription = async () => {
+    setIsPortalLoading(true);
+    try {
+      const apiUrl = import.meta.env.VITE_API_URL ?? '/api';
+      const response = await fetch(`${apiUrl}/create-portal-session`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: userEmail })
+      });
+      if (response.ok) {
+        const data = await response.json();
+        window.location.href = data.url;
+      } else {
+        console.error('Error al abrir el portal de facturación');
+      }
+    } catch (err) {
+      console.error('Error al abrir el portal:', err);
+    } finally {
+      setIsPortalLoading(false);
+    }
+  };
 
   // Modality Form States
   const [isFormOpen, setIsFormOpen] = useState(false);
@@ -149,6 +176,35 @@ export function Settings() {
         </div>
       </section>
 
+      {/* Subscription Card */}
+      <section className="settings-section">
+        <div className="settings-card">
+          <div className="settings-card__header">
+            <CreditCard size={20} className="text-green" />
+            <h3>Suscripción</h3>
+          </div>
+          <div style={{ marginTop: '10px', fontSize: '0.9rem' }}>
+            <p style={{ margin: '0 0 12px 0' }}>
+              Estado: <strong style={{ color: subscriptionStatus === 'active' || subscriptionStatus === 'trialing' ? 'var(--green)' : 'var(--red)', textTransform: 'capitalize' }}>
+                {subscriptionStatus === 'trialing' ? 'Periodo de Prueba' : 
+                 subscriptionStatus === 'active' ? 'Activa' : 
+                 subscriptionStatus === 'past_due' ? 'Pago Pendiente' : 
+                 subscriptionStatus === 'canceled' ? 'Cancelada' : 'Sin Suscripción'}
+              </strong>
+            </p>
+            <button
+              type="button"
+              className="primary-button"
+              disabled={isPortalLoading}
+              onClick={handleManageSubscription}
+              style={{ minHeight: '44px' }}
+            >
+              {isPortalLoading ? 'Cargando Portal...' : 'Gestionar Suscripción'}
+            </button>
+          </div>
+        </div>
+      </section>
+
       {/* Modalities CRUD Section */}
       <section className="settings-section">
         <div className="section-title">
@@ -210,6 +266,29 @@ export function Settings() {
             );
           })}
         </div>
+      </section>
+
+      {/* Logout Card */}
+      <section className="settings-section" style={{ marginTop: '30px' }}>
+        <button
+          type="button"
+          className="ghost-button"
+          onClick={logout}
+          style={{ 
+            width: '100%', 
+            minHeight: '48px', 
+            display: 'flex', 
+            alignItems: 'center', 
+            justifyContent: 'center', 
+            gap: '8px', 
+            color: 'var(--red)',
+            borderColor: 'rgba(239, 68, 68, 0.2)',
+            background: 'rgba(239, 68, 68, 0.05)'
+          }}
+        >
+          <LogOut size={18} />
+          <span>Cerrar Sesión</span>
+        </button>
       </section>
 
       {/* Form Modal (Add / Edit) */}

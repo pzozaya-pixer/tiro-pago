@@ -56,9 +56,37 @@ CREATE TABLE IF NOT EXISTS rounds (
   created_at timestamptz NOT NULL DEFAULT now()
 );
 
+CREATE TABLE IF NOT EXISTS subscriptions (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id uuid NOT NULL UNIQUE REFERENCES users(id) ON DELETE CASCADE,
+  stripe_customer_id text NOT NULL UNIQUE,
+  stripe_subscription_id text NOT NULL UNIQUE,
+  status text NOT NULL,
+  trial_start timestamptz,
+  trial_end timestamptz,
+  current_period_start timestamptz,
+  current_period_end timestamptz,
+  card_fingerprint text,
+  card_brand text,
+  card_last4 text,
+  country text,
+  created_at timestamptz NOT NULL DEFAULT now(),
+  updated_at timestamptz NOT NULL DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS verification_tokens (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  email text NOT NULL,
+  token text NOT NULL,
+  expires_at timestamptz NOT NULL,
+  created_at timestamptz NOT NULL DEFAULT now(),
+  UNIQUE(email, token)
+);
+
 ALTER TABLE weapons ENABLE ROW LEVEL SECURITY;
 ALTER TABLE sessions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE rounds ENABLE ROW LEVEL SECURITY;
+ALTER TABLE subscriptions ENABLE ROW LEVEL SECURITY;
 
 CREATE POLICY "Users can manage own weapons" ON weapons
   FOR ALL USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
@@ -74,6 +102,9 @@ CREATE POLICY "Users can manage own rounds" ON rounds
       AND sessions.user_id = auth.uid()
     )
   );
+
+CREATE POLICY "Users can view own subscription" ON subscriptions
+  FOR SELECT USING (auth.uid() = user_id);
 
 INSERT INTO modalities (id, name, distance, weapon_type, caliber, shots_per_round, max_score_per_shot)
 VALUES

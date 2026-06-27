@@ -8,14 +8,48 @@ datasource db {
 }
 
 model User {
-  id        String    @id @default(cuid())
-  email     String    @unique
-  name      String?
-  createdAt DateTime  @default(now()) @map("created_at")
-  weapons   Weapon[]
-  sessions  Session[]
+  id           String        @id @default(cuid())
+  email        String        @unique
+  name         String?
+  createdAt    DateTime      @default(now()) @map("created_at")
+  weapons      Weapon[]
+  sessions     Session[]
+  subscription Subscription?
 
   @@map("users")
+}
+
+model Subscription {
+  id                     String    @id @default(cuid())
+  userId                 String    @unique @map("user_id")
+  stripeCustomerId       String    @unique @map("stripe_customer_id")
+  stripeSubscriptionId   String    @unique @map("stripe_subscription_id")
+  status                 String    // trialing, active, past_due, canceled, unpaid
+  trialStart             DateTime? @map("trial_start")
+  trialEnd               DateTime? @map("trial_end")
+  currentPeriodStart     DateTime? @map("current_period_start")
+  currentPeriodEnd       DateTime? @map("current_period_end")
+  cardFingerprint        String?   @map("card_fingerprint")
+  cardBrand              String?   @map("card_brand")
+  cardLast4              String?   @map("card_last4")
+  country                String?
+  createdAt              DateTime  @default(now()) @map("created_at")
+  updatedAt              DateTime  @updatedAt @map("updated_at")
+
+  user                   User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("subscriptions")
+}
+
+model VerificationToken {
+  id        String   @id @default(cuid())
+  email     String
+  token     String   // Código OTP de 6 dígitos
+  expiresAt DateTime @map("expires_at")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@unique([email, token])
+  @@map("verification_tokens")
 }
 
 model Weapon {

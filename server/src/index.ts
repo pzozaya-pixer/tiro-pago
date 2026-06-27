@@ -3,6 +3,8 @@ import express from 'express';
 import helmet from 'helmet';
 import { PrismaClient } from '@prisma/client';
 import { z } from 'zod';
+import { stripe } from './lib/stripe';
+import { sendOtpEmail, sendTrialEndingEmail } from './lib/email';
 
 const app = express();
 const prisma = new PrismaClient();
@@ -10,6 +12,32 @@ const port = Number(process.env.PORT ?? 3000);
 
 app.use(helmet());
 app.use(cors({ origin: process.env.APP_URL ?? true }));
+
+// Webhook de Stripe (debe ir antes de express.json para recibir el body raw)
+app.post('/api/webhooks/stripe', express.raw({ type: 'application/json' }), async (req, res) => {
+  const sig = req.headers['stripe-signature'];
+  let event;
+
+  try {
+    event = stripe.webhooks.constructEvent(
+      req.body,
+      sig || '',
+      process.env.STRIPE_WEBHOOK_SECRET || ''
+    );
+  } catch (err: any) {
+    console.error('Webhook signature verification failed:', err.message);
+    return res.status(400).send(`Webhook Error: ${err.message}`);
+  }
+
+  try {
+    await handleStripeWebhook(event);
+    res.json({ received: true });
+  } catch (err: any) {
+    console.error('Error processing webhook:', err.message);
+    res.status(500).send('Webhook processing failed');
+  }
+});
+
 app.use(express.json({ limit: '1mb' }));
 
 const sessionSchema = z.object({
@@ -267,6 +295,285 @@ app.post('/register', async (request, response) => {
     response.status(500).json({ error: 'Failed to register user' });
   }
 });
+
+// --- ENDPOINTS DE AUTENTICACIÓN Y STRIPE ---
+
+// 1. Enviar código OTP por correo
+app.post('/api/auth/send-otp', async (req, res) => {
+  try {
+    const { email } = z.object({ email: z.string().email() }).parse(req.body);
+    
+    // Generar código de 6 dígitos
+    const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
+    const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutos
+
+    // Guardar en la base de datos
+    await prisma.verificationToken.create({
+      data: {
+        email,
+        token: otpCode,
+        expiresAt
+      }
+    });
+
+    // Enviar correo
+    await sendOtpEmail(email, otpCode);
+    res.json({ success: true });
+  } catch (error: any) {
+    console.error('Error sending OTP:', error);
+    res.status(400).json({ error: error.message || 'Failed to send OTP' });
+  }
+});
+
+// 2. Verificar código OTP e iniciar sesión
+app.post('/api/auth/verify-otp', async (req, res) => {
+  try {
+    const { email, token } = z.object({
+      email: z.string().email(),
+      token: z.string().length(6)
+    }).parse(req.body);
+
+    // Buscar token válido y no expirado
+    const verificationToken = await prisma.verificationToken.findFirst({
+      where: {
+        email,
+        token,
+        expiresAt: { gt: new Date() }
+      }
+    });
+
+    if (!verificationToken) {
+      return res.status(401).json({ error: 'Código inválido o expirado' });
+    }
+
+    // Consumir el token
+    await prisma.verificationToken.delete({
+      where: { id: verificationToken.id }
+    });
+
+    // Buscar o crear usuario (el registro inicial se hace en /api/register-subscription)
+    let user = await prisma.user.findUnique({
+      where: { email },
+      include: { subscription: true }
+    });
+
+    if (!user) {
+      // Si el usuario no existe, significa que no se ha registrado con suscripción aún.
+      // Le indicamos al frontend que debe proceder al registro de suscripción.
+      return res.status(200).json({
+        success: true,
+        requiresRegistration: true,
+        email
+      });
+    }
+
+    res.json({
+      success: true,
+      requiresRegistration: false,
+      user: {
+        id: user.id,
+        email: user.email,
+        name: user.name,
+        subscriptionStatus: user.subscription?.status || 'none'
+      }
+    });
+  } catch (error: any) {
+    console.error('Error verifying OTP:', error);
+    res.status(400).json({ error: error.message || 'Verification failed' });
+  }
+});
+
+// 3. Registrar usuario y crear suscripción con prueba gratuita y chequeo de abuso
+app.post('/api/register-subscription', async (req, res) => {
+  try {
+    const { email, name, paymentMethodId } = z.object({
+      email: z.string().email(),
+      name: z.string().min(2),
+      paymentMethodId: z.string()
+    }).parse(req.body);
+
+    // 1. Obtener detalles del método de pago de Stripe para sacar el fingerprint
+    const paymentMethod = await stripe.paymentMethods.retrieve(paymentMethodId);
+    const card = paymentMethod.card;
+    const fingerprint = card?.fingerprint;
+
+    // 2. Comprobar abuso de prueba gratuita mediante card fingerprint
+    if (fingerprint) {
+      const duplicateCardSub = await prisma.subscription.findFirst({
+        where: { cardFingerprint: fingerprint }
+      });
+
+      if (duplicateCardSub) {
+        return res.status(400).json({
+          error: 'TRIAL_ABUSE',
+          message: 'Esta tarjeta de crédito ya ha sido utilizada para un periodo de prueba gratuito. Por favor, utiliza otra tarjeta.'
+        });
+      }
+    }
+
+    // 3. Crear cliente en Stripe
+    const customer = await stripe.customers.create({
+      email,
+      name,
+      payment_method: paymentMethodId,
+      invoice_settings: {
+        default_payment_method: paymentMethodId
+      }
+    });
+
+    // 4. Obtener o crear el precio de 1,50€/mes en Stripe
+    let priceId = process.env.STRIPE_PRICE_ID;
+    if (!priceId) {
+      const products = await stripe.products.list({ limit: 10 });
+      let product = products.data.find(p => p.name === 'TIRO22 Suscripción');
+      if (!product) {
+        product = await stripe.products.create({
+          name: 'TIRO22 Suscripción',
+          description: 'Acceso ilimitado a la plataforma de entrenamiento TIRO22'
+        });
+      }
+      const prices = await stripe.prices.list({ product: product.id, limit: 10 });
+      let price = prices.data[0];
+      if (!price) {
+        price = await stripe.prices.create({
+          product: product.id,
+          unit_amount: 150, // 1,50 EUR en céntimos
+          currency: 'eur',
+          recurring: { interval: 'month' }
+        });
+      }
+      priceId = price.id;
+    }
+
+    // 5. Crear la suscripción con 15 días de prueba
+    const subscription = await stripe.subscriptions.create({
+      customer: customer.id,
+      items: [{ price: priceId }],
+      trial_period_days: 15,
+      payment_behavior: 'default_incomplete',
+      payment_settings: { save_default_payment_method: 'on_subscription' },
+      expand: ['latest_invoice.payment_intent']
+    });
+
+    // 6. Guardar el usuario y la suscripción en la base de datos
+    const user = await prisma.user.upsert({
+      where: { email },
+      update: { name },
+      create: { email, name }
+    });
+
+    await prisma.subscription.create({
+      data: {
+        userId: user.id,
+        stripeCustomerId: customer.id,
+        stripeSubscriptionId: subscription.id,
+        status: subscription.status,
+        trialStart: subscription.trial_start ? new Date(subscription.trial_start * 1000) : null,
+        trialEnd: subscription.trial_end ? new Date(subscription.trial_end * 1000) : null,
+        currentPeriodStart: new Date(subscription.current_period_start * 1000),
+        currentPeriodEnd: new Date(subscription.current_period_end * 1000),
+        cardFingerprint: fingerprint || null,
+        cardBrand: card?.brand || null,
+        cardLast4: card?.last4 || null,
+        country: card?.country || null
+      }
+    });
+
+    res.status(201).json({
+      success: true,
+      user: {
+        id: user.id,
+        email: user.email,
+        name: user.name,
+        subscriptionStatus: subscription.status
+      }
+    });
+  } catch (error: any) {
+    console.error('Error creating subscription:', error);
+    res.status(400).json({ error: error.message || 'Failed to create subscription' });
+  }
+});
+
+// 4. Crear sesión para el Portal de Facturación de Stripe (Customer Portal)
+app.post('/api/create-portal-session', async (req, res) => {
+  try {
+    const { email } = z.object({ email: z.string().email() }).parse(req.body);
+
+    const user = await prisma.user.findUnique({
+      where: { email },
+      include: { subscription: true }
+    });
+
+    if (!user || !user.subscription) {
+      return res.status(404).json({ error: 'Suscripción no encontrada' });
+    }
+
+    const session = await stripe.billingPortal.sessions.create({
+      customer: user.subscription.stripeCustomerId,
+      return_url: `${process.env.APP_URL || 'http://localhost:8080'}/ajustes`
+    });
+
+    res.json({ url: session.url });
+  } catch (error: any) {
+    console.error('Error creating portal session:', error);
+    res.status(500).json({ error: 'Failed to create portal session' });
+  }
+});
+
+// --- MANEJADOR DE WEBHOOKS DE STRIPE ---
+
+async function handleStripeWebhook(event: any) {
+  const subscriptionObj = event.data.object;
+  const stripeSubscriptionId = subscriptionObj.id;
+
+  switch (event.type) {
+    case 'customer.subscription.trial_will_end': {
+      // Ocurre 3 días antes de finalizar la prueba
+      const sub = await prisma.subscription.findUnique({
+        where: { stripeSubscriptionId },
+        include: { user: true }
+      });
+      if (sub && sub.user.email) {
+        // Crear un enlace temporal de portal de facturación para permitir la cancelación directa
+        const session = await stripe.billingPortal.sessions.create({
+          customer: sub.stripeCustomerId,
+          return_url: `${process.env.APP_URL || 'http://localhost:8080'}/ajustes`
+        });
+        
+        await sendTrialEndingEmail(
+          sub.user.email,
+          new Date(subscriptionObj.trial_end * 1000),
+          session.url
+        );
+      }
+      break;
+    }
+    case 'customer.subscription.updated': {
+      // Actualizar el estado y fechas en la base de datos
+      await prisma.subscription.update({
+        where: { stripeSubscriptionId },
+        data: {
+          status: subscriptionObj.status,
+          currentPeriodStart: new Date(subscriptionObj.current_period_start * 1000),
+          currentPeriodEnd: new Date(subscriptionObj.current_period_end * 1000),
+          trialStart: subscriptionObj.trial_start ? new Date(subscriptionObj.trial_start * 1000) : null,
+          trialEnd: subscriptionObj.trial_end ? new Date(subscriptionObj.trial_end * 1000) : null,
+        }
+      });
+      break;
+    }
+    case 'customer.subscription.deleted': {
+      // Suscripción cancelada
+      await prisma.subscription.update({
+        where: { stripeSubscriptionId },
+        data: {
+          status: 'canceled',
+        }
+      });
+      break;
+    }
+  }
+}
 
 async function ensureDemoUser(id: string) {
   await prisma.user.upsert({
