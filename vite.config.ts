@@ -3,9 +3,8 @@ import react from '@vitejs/plugin-react';
 import { VitePWA } from 'vite-plugin-pwa';
 
 export default defineConfig(({ mode }) => {
-  const isProd = mode === 'production';
   return {
-    base: isProd ? '/tiro/' : '/',
+    base: '/',
     plugins: [
       react(),
       VitePWA({
@@ -19,11 +18,11 @@ export default defineConfig(({ mode }) => {
           background_color: '#081016',
           display: 'standalone',
           orientation: 'portrait',
-          start_url: isProd ? '/tiro/' : '/',
-          scope: isProd ? '/tiro/' : '/',
+          start_url: '/',
+          scope: '/',
           icons: [
             {
-              src: isProd ? '/tiro/icon-512.png' : '/icon-512.png',
+              src: '/icon-512.png',
               sizes: '512x512',
               type: 'image/png',
               purpose: 'any maskable'
