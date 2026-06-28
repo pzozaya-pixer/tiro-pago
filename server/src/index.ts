@@ -3,8 +3,8 @@ import express from 'express';
 import helmet from 'helmet';
 import { PrismaClient } from '@prisma/client';
 import { z } from 'zod';
-import { stripe } from './lib/stripe';
-import { sendOtpEmail, sendTrialEndingEmail } from './lib/email';
+import { stripe } from './lib/stripe.js';
+import { sendOtpEmail, sendTrialEndingEmail } from './lib/email.js';
 
 const app = express();
 const prisma = new PrismaClient();
@@ -425,7 +425,7 @@ app.post('/api/register-subscription', async (req, res) => {
     let priceId = process.env.STRIPE_PRICE_ID;
     if (!priceId) {
       const products = await stripe.products.list({ limit: 10 });
-      let product = products.data.find(p => p.name === 'TIRO22 Suscripción');
+      let product = products.data.find((p: any) => p.name === 'TIRO22 Suscripción');
       if (!product) {
         product = await stripe.products.create({
           name: 'TIRO22 Suscripción',
