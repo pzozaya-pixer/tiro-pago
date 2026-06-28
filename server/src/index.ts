@@ -10,6 +10,15 @@ const app = express();
 const prisma = new PrismaClient();
 const port = Number(process.env.PORT ?? 3000);
 
+const getReturnUrl = () => {
+  const appUrl = process.env.APP_URL || 'http://localhost:8080';
+  const isProd = process.env.NODE_ENV === 'production';
+  const baseRedirectUrl = isProd && !appUrl.includes('/tiropago')
+    ? `${appUrl.replace(/\/$/, '')}/tiropago`
+    : appUrl;
+  return `${baseRedirectUrl.replace(/\/$/, '')}/ajustes`;
+};
+
 app.use(helmet());
 app.use(cors({ origin: process.env.APP_URL ?? true }));
 
@@ -523,7 +532,7 @@ app.post('/create-portal-session', async (req, res) => {
 
     const session = await stripe.billingPortal.sessions.create({
       customer: user.subscription.stripeCustomerId,
-      return_url: `${process.env.APP_URL || 'http://localhost:8080'}/ajustes`
+      return_url: getReturnUrl()
     });
 
     res.json({ url: session.url });
@@ -550,7 +559,7 @@ async function handleStripeWebhook(event: any) {
         // Crear un enlace temporal de portal de facturación para permitir la cancelación directa
         const session = await stripe.billingPortal.sessions.create({
           customer: sub.stripeCustomerId,
-          return_url: `${process.env.APP_URL || 'http://localhost:8080'}/ajustes`
+          return_url: getReturnUrl()
         });
         
         await sendTrialEndingEmail(
