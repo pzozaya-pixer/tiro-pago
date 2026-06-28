@@ -7,7 +7,7 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-tiro22pago}
       POSTGRES_DB: ${POSTGRES_DB:-tiro22pago}
     volumes:
-      - ./postgres_data:/var/lib/postgresql/data
+      - pgdata:/var/lib/postgresql/data
     expose:
       - "5432"
     restart: unless-stopped
@@ -52,3 +52,6 @@ services:
     depends_on:
       - api
     restart: unless-stopped
+
+volumes:
+  pgdata:
