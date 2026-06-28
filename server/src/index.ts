@@ -14,7 +14,7 @@ app.use(helmet());
 app.use(cors({ origin: process.env.APP_URL ?? true }));
 
 // Webhook de Stripe (debe ir antes de express.json para recibir el body raw)
-app.post('/api/webhooks/stripe', express.raw({ type: 'application/json' }), async (req, res) => {
+app.post('/webhooks/stripe', express.raw({ type: 'application/json' }), async (req, res) => {
   const sig = req.headers['stripe-signature'];
   let event;
 
@@ -299,7 +299,7 @@ app.post('/register', async (request, response) => {
 // --- ENDPOINTS DE AUTENTICACIÓN Y STRIPE ---
 
 // 1. Enviar código OTP por correo
-app.post('/api/auth/send-otp', async (req, res) => {
+app.post('/auth/send-otp', async (req, res) => {
   try {
     const { email } = z.object({ email: z.string().email() }).parse(req.body);
     
@@ -326,7 +326,7 @@ app.post('/api/auth/send-otp', async (req, res) => {
 });
 
 // 2. Verificar código OTP e iniciar sesión
-app.post('/api/auth/verify-otp', async (req, res) => {
+app.post('/auth/verify-otp', async (req, res) => {
   try {
     const { email, token } = z.object({
       email: z.string().email(),
@@ -384,7 +384,7 @@ app.post('/api/auth/verify-otp', async (req, res) => {
 });
 
 // 3. Registrar usuario y crear suscripción con prueba gratuita y chequeo de abuso
-app.post('/api/register-subscription', async (req, res) => {
+app.post('/register-subscription', async (req, res) => {
   try {
     const { email, name, paymentMethodId } = z.object({
       email: z.string().email(),
@@ -495,7 +495,7 @@ app.post('/api/register-subscription', async (req, res) => {
 });
 
 // 4. Crear sesión para el Portal de Facturación de Stripe (Customer Portal)
-app.post('/api/create-portal-session', async (req, res) => {
+app.post('/create-portal-session', async (req, res) => {
   try {
     const { email } = z.object({ email: z.string().email() }).parse(req.body);
 
