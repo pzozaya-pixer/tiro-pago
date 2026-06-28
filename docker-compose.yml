@@ -1,7 +1,7 @@
 services:
   postgres:
     image: postgres:16-alpine
-    container_name: tiro22-postgres
+    container_name: tiro22-postgres-pago
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-tiro22}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-tiro22}
@@ -21,7 +21,7 @@ services:
     build:
       context: .
       dockerfile: server/Dockerfile
-    container_name: tiro22-api
+    container_name: tiro22-api-pago
     environment:
       DATABASE_URL: postgresql://${POSTGRES_USER:-tiro22}:${POSTGRES_PASSWORD:-tiro22}@postgres:5432/${POSTGRES_DB:-tiro22}?schema=public
       PORT: 3000
@@ -41,7 +41,7 @@ services:
       args:
         - VITE_DATA_PROVIDER=${VITE_DATA_PROVIDER:-api}
         - VITE_API_URL=${VITE_API_URL:-/api}
-    container_name: tiro22-web
+    container_name: tiro22-web-pago
     environment:
       APP_URL: ${APP_URL:-http://localhost:8080}
       NODE_ENV: production
