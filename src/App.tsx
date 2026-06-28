@@ -194,9 +194,30 @@ function OnboardingFlow({
   const [otpToken, setOtpToken] = useState('');
   const [registerName, setRegisterName] = useState('');
   const [legalAccepted, setLegalAccepted] = useState(false);
+  const [selectedPlan, setSelectedPlan] = useState<'monthly' | 'yearly'>('monthly');
+  const [plans, setPlans] = useState<{
+    monthly: { priceId: string; amount: number; currency: string } | null;
+    yearly: { priceId: string; amount: number; currency: string } | null;
+  }>({ monthly: null, yearly: null });
 
   const stripe = useStripe();
   const elements = useElements();
+
+  useEffect(() => {
+    const fetchPlans = async () => {
+      try {
+        const apiUrl = import.meta.env.VITE_API_URL ?? '/api';
+        const response = await fetch(`${apiUrl}/stripe-prices`);
+        if (response.ok) {
+          const data = await response.json();
+          setPlans(data);
+        }
+      } catch (err) {
+        console.error('Error fetching plans:', err);
+      }
+    };
+    fetchPlans();
+  }, []);
 
   if (showLegal) {
     return <Legal onClose={() => setShowLegal(false)} />;
@@ -277,7 +298,11 @@ function OnboardingFlow({
       }
 
       // Enviar al backend para crear la suscripción
-      const res = await registerSubscription(email, registerName, paymentMethod.id);
+      const priceId = selectedPlan === 'monthly' ? plans.monthly?.priceId : plans.yearly?.priceId;
+      if (!priceId) {
+        throw new Error('No se ha podido cargar el plan de suscripción seleccionado.');
+      }
+      const res = await registerSubscription(email, registerName, paymentMethod.id, priceId);
       
       if (!res.success) {
         if (res.error === 'TRIAL_ABUSE') {
@@ -385,10 +410,55 @@ function OnboardingFlow({
         <form className="onboarding-card" onSubmit={handleRegisterSubmit} style={{ maxWidth: '440px' }}>
           <div className="onboarding-logo">
             <h1>Completa tu Registro</h1>
-            <p>Regístrate y comienza tu prueba de 15 días gratis. Luego, solo 1,50 €/mes.</p>
+            <p>Regístrate y comienza tu prueba de 15 días gratis. Luego, selecciona tu plan.</p>
           </div>
 
           {errorMsg && <div className="error-banner" style={{ background: 'rgba(239,68,68,0.1)', color: '#f87171', padding: '10px', borderRadius: '8px', marginBottom: '15px', fontSize: '0.85rem' }}>{errorMsg}</div>}
+
+          {/* Selector de Planes */}
+          <div className="field" style={{ marginBottom: '20px' }}>
+            <span style={{ fontSize: '0.9rem', fontWeight: '500', display: 'block', marginBottom: '8px' }}>Elige tu plan de suscripción</span>
+            <div style={{ display: 'flex', gap: '12px' }}>
+              <div 
+                onClick={() => setSelectedPlan('monthly')}
+                style={{
+                  flex: 1,
+                  padding: '16px',
+                  borderRadius: '12px',
+                  border: `2px solid ${selectedPlan === 'monthly' ? 'var(--green)' : 'rgba(255,255,255,0.1)'}`,
+                  background: selectedPlan === 'monthly' ? 'rgba(16,185,129,0.1)' : 'rgba(255,255,255,0.02)',
+                  cursor: 'pointer',
+                  textAlign: 'center',
+                  transition: 'all 0.2s ease'
+                }}
+              >
+                <div style={{ fontWeight: 'bold', fontSize: '1.05rem', color: selectedPlan === 'monthly' ? 'var(--green)' : '#fff' }}>Mensual</div>
+                <div style={{ fontSize: '1.25rem', fontWeight: 'bold', margin: '8px 0' }}>
+                  {plans.monthly ? `${plans.monthly.amount.toLocaleString('es-ES', { minimumFractionDigits: 2 })} €` : '1,50 €'}
+                </div>
+                <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Al mes (15 días gratis)</div>
+              </div>
+              <div 
+                onClick={() => setSelectedPlan('yearly')}
+                style={{
+                  flex: 1,
+                  padding: '16px',
+                  borderRadius: '12px',
+                  border: `2px solid ${selectedPlan === 'yearly' ? 'var(--green)' : 'rgba(255,255,255,0.1)'}`,
+                  background: selectedPlan === 'yearly' ? 'rgba(16,185,129,0.1)' : 'rgba(255,255,255,0.02)',
+                  cursor: 'pointer',
+                  textAlign: 'center',
+                  transition: 'all 0.2s ease'
+                }}
+              >
+                <div style={{ fontWeight: 'bold', fontSize: '1.05rem', color: selectedPlan === 'yearly' ? 'var(--green)' : '#fff' }}>Anual</div>
+                <div style={{ fontSize: '1.25rem', fontWeight: 'bold', margin: '8px 0' }}>
+                  {plans.yearly ? `${plans.yearly.amount.toLocaleString('es-ES', { minimumFractionDigits: 2 })} €` : '15,00 €'}
+                </div>
+                <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Al año (15 días gratis)</div>
+              </div>
+            </div>
+          </div>
 
           <label className="field">
             <span>Nombre completo</span>

@@ -383,13 +383,50 @@ app.post('/auth/verify-otp', async (req, res) => {
   }
 });
 
+// 2.5 Obtener precios de los productos mensual y anual desde Stripe
+app.get('/stripe-prices', async (req, res) => {
+  try {
+    const monthlyProductId = 'prod_UmurZxWFbU7Nux';
+    const yearlyProductId = 'prod_UmuvGLlhmiYQjt';
+
+    const [monthlyPrices, yearlyPrices] = await Promise.all([
+      stripe.prices.list({ product: monthlyProductId, active: true, limit: 1 }),
+      stripe.prices.list({ product: yearlyProductId, active: true, limit: 1 })
+    ]);
+
+    const monthlyPrice = monthlyPrices.data[0];
+    const yearlyPrice = yearlyPrices.data[0];
+
+    if (!monthlyPrice || !yearlyPrice) {
+      return res.status(404).json({ error: 'No se encontraron precios activos en Stripe para los productos configurados.' });
+    }
+
+    res.json({
+      monthly: {
+        priceId: monthlyPrice.id,
+        amount: (monthlyPrice.unit_amount ?? 0) / 100,
+        currency: monthlyPrice.currency
+      },
+      yearly: {
+        priceId: yearlyPrice.id,
+        amount: (yearlyPrice.unit_amount ?? 0) / 100,
+        currency: yearlyPrice.currency
+      }
+    });
+  } catch (error: any) {
+    console.error('Error al obtener precios de Stripe:', error);
+    res.status(500).json({ error: 'Error al obtener los precios desde Stripe' });
+  }
+});
+
 // 3. Registrar usuario y crear suscripción con prueba gratuita y chequeo de abuso
 app.post('/register-subscription', async (req, res) => {
   try {
-    const { email, name, paymentMethodId } = z.object({
+    const { email, name, paymentMethodId, priceId } = z.object({
       email: z.string().email(),
       name: z.string().min(2),
-      paymentMethodId: z.string()
+      paymentMethodId: z.string(),
+      priceId: z.string()
     }).parse(req.body);
 
     // 1. Obtener detalles del método de pago de Stripe para sacar el fingerprint
@@ -420,30 +457,6 @@ app.post('/register-subscription', async (req, res) => {
         default_payment_method: paymentMethodId
       }
     });
-
-    // 4. Obtener o crear el precio de 1,50€/mes en Stripe
-    let priceId = process.env.STRIPE_PRICE_ID;
-    if (!priceId) {
-      const products = await stripe.products.list({ limit: 10 });
-      let product = products.data.find((p: any) => p.name === 'TIRO22 Suscripción');
-      if (!product) {
-        product = await stripe.products.create({
-          name: 'TIRO22 Suscripción',
-          description: 'Acceso ilimitado a la plataforma de entrenamiento TIRO22'
-        });
-      }
-      const prices = await stripe.prices.list({ product: product.id, limit: 10 });
-      let price = prices.data[0];
-      if (!price) {
-        price = await stripe.prices.create({
-          product: product.id,
-          unit_amount: 150, // 1,50 EUR en céntimos
-          currency: 'eur',
-          recurring: { interval: 'month' }
-        });
-      }
-      priceId = price.id;
-    }
 
     // 5. Crear la suscripción con 15 días de prueba
     const subscription = await stripe.subscriptions.create({

@@ -18,7 +18,7 @@ type TrainingState = {
   activeTiradaId?: string;
   sendOtp: (email: string) => Promise<{ requiresRegistration: boolean }>;
   verifyOtp: (email: string, token: string) => Promise<{ requiresRegistration: boolean; subscriptionStatus?: string }>;
-  registerSubscription: (email: string, name: string, paymentMethodId: string) => Promise<{ success: boolean; error?: string; message?: string }>;
+  registerSubscription: (email: string, name: string, paymentMethodId: string, priceId: string) => Promise<{ success: boolean; error?: string; message?: string }>;
   logout: () => void;
   createTirada: (input: {
     modalityId: string;
@@ -167,12 +167,12 @@ export const useTrainingStore = create<TrainingState>()(
         }
         return data;
       },
-      registerSubscription: async (email, name, paymentMethodId) => {
+      registerSubscription: async (email, name, paymentMethodId, priceId) => {
         const apiUrl = import.meta.env.VITE_API_URL ?? '/api';
         const response = await fetch(`${apiUrl}/register-subscription`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email, name, paymentMethodId })
+          body: JSON.stringify({ email, name, paymentMethodId, priceId })
         });
         
         const data = await response.json();
