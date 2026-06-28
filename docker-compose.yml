@@ -3,9 +3,9 @@ services:
     image: postgres:16-alpine
     container_name: tiro22-postgres-pago
     environment:
-      POSTGRES_USER: ${POSTGRES_USER:-tiro22}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-tiro22}
-      POSTGRES_DB: ${POSTGRES_DB:-tiro22}
+      POSTGRES_USER: ${POSTGRES_USER:-tiro22pago}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-tiro22pago}
+      POSTGRES_DB: ${POSTGRES_DB:-tiro22pago}
     volumes:
       - ./postgres_data:/var/lib/postgresql/data
     expose:
@@ -22,8 +22,10 @@ services:
       context: .
       dockerfile: server/Dockerfile
     container_name: tiro22-api-pago
+    env_file:
+      - .env
     environment:
-      DATABASE_URL: postgresql://${POSTGRES_USER:-tiro22}:${POSTGRES_PASSWORD:-tiro22}@postgres:5432/${POSTGRES_DB:-tiro22}?schema=public
+      DATABASE_URL: postgresql://${POSTGRES_USER:-tiro22pago}:${POSTGRES_PASSWORD:-tiro22pago}@postgres:5432/${POSTGRES_DB:-tiro22pago}?schema=public
       PORT: 3000
       APP_URL: ${APP_URL:-http://localhost:8080}
       NODE_ENV: production
