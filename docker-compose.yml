@@ -1,4 +1,12 @@
 services:
+  init-db:
+    image: alpine:latest
+    container_name: tiro22-init-db
+    user: "root"
+    volumes:
+      - ./postgres_data:/data
+    command: chown -R 999:999 /data
+
   postgres:
     image: postgres:16-alpine
     container_name: tiro22-postgres-pago
@@ -7,10 +15,13 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-tiro22pago}
       POSTGRES_DB: ${POSTGRES_DB:-tiro22pago}
     volumes:
-      - pgdata-pago:/var/lib/postgresql/data
+      - ./postgres_data:/var/lib/postgresql/data
     expose:
       - "5432"
     restart: unless-stopped
+    depends_on:
+      init-db:
+        condition: service_completed_successfully
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
       interval: 10s
@@ -54,5 +65,4 @@ services:
       - api
     restart: unless-stopped
 
-volumes:
-  pgdata-pago:
+
