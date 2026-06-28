@@ -1,8 +1,10 @@
 FROM node:22-alpine AS build
 ARG VITE_DATA_PROVIDER=api
 ARG VITE_API_URL=/api
+ARG VITE_STRIPE_PUBLISHABLE_KEY
 ENV VITE_DATA_PROVIDER=$VITE_DATA_PROVIDER
 ENV VITE_API_URL=$VITE_API_URL
+ENV VITE_STRIPE_PUBLISHABLE_KEY=$VITE_STRIPE_PUBLISHABLE_KEY
 WORKDIR /app
 RUN corepack enable && corepack prepare pnpm@11.5.3 --activate
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./

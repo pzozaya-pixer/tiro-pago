@@ -43,6 +43,7 @@ services:
       args:
         - VITE_DATA_PROVIDER=${VITE_DATA_PROVIDER:-api}
         - VITE_API_URL=${VITE_API_URL:-/api}
+        - VITE_STRIPE_PUBLISHABLE_KEY=${VITE_STRIPE_PUBLISHABLE_KEY}
     container_name: tiro22-web-pago
     environment:
       APP_URL: ${APP_URL:-http://localhost:8080}
